@@ -1,0 +1,7 @@
+{
+  "name": "PHANTOM",
+  "description": "AI-Native Decentralized Drum Machine running on the Shadow Core.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

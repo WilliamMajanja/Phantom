@@ -1,0 +1,188 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PHANTOM | AI-Native Decentralized Drum Machine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- JetBrains Mono for that Cyberpunk Terminal feel -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              surface: 'var(--surface)',
+              plate: 'var(--plate)',
+              text: 'var(--text)',
+              textLight: 'var(--text-light)',
+              accent: 'var(--accent)', 
+              indicator: 'var(--accent)', 
+              knob: 'var(--knob)',
+            },
+            fontFamily: {
+              sans: ['JetBrains Mono', 'monospace'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            boxShadow: {
+              'neo': 'var(--shadow-neo)',
+              'neo-sm': 'var(--shadow-neo-sm)',
+              'neo-inner': 'var(--shadow-neo-inner)',
+              'neo-pressed': 'var(--shadow-neo-pressed)',
+              'glow': '0 0 10px var(--accent), 0 0 20px var(--accent)',
+            },
+            animation: {
+              'scan': 'scan 8s linear infinite',
+              'flicker': 'flicker 0.15s infinite',
+              'fade-in': 'fadeIn 0.5s ease-out',
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+            keyframes: {
+              scan: {
+                '0%': { transform: 'translateY(-100%)' },
+                '100%': { transform: 'translateY(100%)' },
+              },
+              flicker: {
+                '0%, 100%': { opacity: '1' },
+                '50%': { opacity: '0.92' },
+              },
+              fadeIn: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        /* PHANTOM: Tactical Night Mode v3 */
+        --surface: #050505;
+        --plate: #0a0a0a;
+        --text: #e0e0e0;
+        --text-light: #555555;
+        --accent: #00ff41; /* Radar Green */
+        --knob: #1a1a1a;
+        
+        --shadow-neo: 0 1px 0 rgba(255,255,255,0.05), 0 -1px 0 rgba(0,0,0,0.8);
+        --shadow-neo-sm: 0 1px 0 rgba(255,255,255,0.05);
+        --shadow-neo-inner: inset 0 2px 4px rgba(0,0,0,0.9);
+        --shadow-neo-pressed: inset 0 2px 5px #000, 0 0 0 1px var(--accent);
+      }
+
+      body {
+        background-color: var(--surface);
+        /* Tactical Grid Background */
+        background-image: 
+          linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 100% 3px, 60px 60px, 60px 60px;
+        color: var(--text);
+        font-family: 'JetBrains Mono', monospace;
+        height: 100vh;
+        overflow: hidden;
+      }
+      
+      .glass-panel {
+        background: rgba(8, 8, 8, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px); /* Heavier blur for depth */
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+        transition: border-color 0.2s ease;
+      }
+      
+      .glass-panel:hover {
+        border-color: rgba(0, 255, 65, 0.2);
+      }
+
+      /* Custom Circuit Scrollbar */
+      ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+        background: #020202;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #333; 
+        border-radius: 0;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--accent);
+      }
+      ::-webkit-scrollbar-corner {
+        background: #000;
+      }
+
+      /* Film Grain Overlay */
+      body::after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 997;
+      }
+
+      /* CRT Vignette */
+      body::before {
+        content: " ";
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.8) 100%);
+        z-index: 998;
+        pointer-events: none;
+      }
+      
+      /* CRT Scanline Animation */
+      .scanline {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.15) 51%);
+        background-size: 100% 4px;
+        pointer-events: none;
+        z-index: 999;
+        opacity: 0.7;
+      }
+
+      .text-glow {
+        text-shadow: 0 0 10px rgba(0, 255, 65, 0.6);
+      }
+      
+      .glitch-text {
+        position: relative;
+      }
+      
+      /* Clip Path Helpers */
+      .clip-path-slant {
+        clip-path: polygon(0 0, 100% 0, 100% 85%, 90% 100%, 0 100%);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.40.0"
+  }
+}
+</script>
+<script type="module" src="./index.tsx"></script>
+</head>
+  <body>
+    <div class="scanline"></div>
+    <div id="root"></div>
+  </body>
+</html>

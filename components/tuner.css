@@ -1,0 +1,102 @@
+
+:root {
+  --tuner-surface: #0a0a0a;
+  --tuner-glow-mesh: #00ff41; /* Radar Green */
+  --tuner-glow-weak: #ff0000;
+  
+  /* Stem Colors - Tactical Muted */
+  --stem-vox: #f1c40f;  
+  --stem-drum: #e67e22; 
+  --stem-bass: #3498db; 
+  --stem-other: #9b59b6; 
+}
+
+.tuner-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  background: var(--tuner-surface);
+  border-radius: 50%;
+  border: 1px solid #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.central-dial {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  background: #111;
+  border-radius: 50%;
+  border: 1px solid #333;
+  z-index: 2;
+  /* STATIC: No animation */
+}
+
+.dial-marker {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    width: 2px;
+    height: 10px;
+    background: #00ff41;
+    transform: translateX(-50%);
+}
+
+.tuner-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.meter-bg {
+    fill: none;
+    stroke: #222;
+    stroke-width: 4;
+}
+
+.meter-fill {
+    fill: none;
+    stroke-width: 4;
+    stroke-linecap: square;
+}
+
+.mesh-ring-fill {
+    stroke: var(--tuner-glow-mesh);
+    filter: drop-shadow(0 0 5px var(--tuner-glow-mesh));
+}
+.mesh-ring-fill.weak {
+    stroke: var(--tuner-glow-weak);
+}
+
+.vox-fill { stroke: var(--stem-vox); }
+.drum-fill { stroke: var(--stem-drum); }
+.bass-fill { stroke: var(--stem-bass); }
+.other-fill { stroke: var(--stem-other); }
+
+.label-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.tuner-label {
+    position: absolute;
+    font-size: 9px;
+    font-weight: 700;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.label-mesh { bottom: 25px; width: 100%; text-align: center; color: #00ff41; }
+.label-vox { top: 60px; left: 60px; }
+.label-drum { top: 60px; right: 60px; }
+.label-bass { bottom: 60px; left: 60px; }
+.label-other { bottom: 60px; right: 60px; }

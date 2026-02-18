@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<controller>
+    <id>LyraFlex Virtual Link</id>
+    <description>Virtual MIDI mapping for LyraFlex AI DAW</description>
+    <scriptfiles>
+        <file filename="LyraFlex_Controller.js" functionprefix="LyraFlex"/>
+    </scriptfiles>
+    <controls>
+        <!-- Master Filter Effect on Channel 1 -->
+        <control>
+            <group>[QuickEffectRack1_[Channel1]]</group>
+            <key>super1</key>
+            <status>0xB0</status>
+            <midino>20</midino>
+            <options>
+                <script-binding/>
+            </options>
+        </control>
+        <!-- Talkover Toggle -->
+        <control>
+            <group>[Master]</group>
+            <key>talkover</key>
+            <status>0xB0</status>
+            <midino>51</midino>
+            <options>
+                <normal/>
+            </options>
+        </control>
+        <!-- Sampler 1 Trigger (Station ID) -->
+        <control>
+            <group>[Sampler1]</group>
+            <key>cue_play</key>
+            <status>0x90</status>
+            <midino>60</midino>
+            <options>
+                <normal/>
+            </options>
+        </control>
+    </controls>
+</controller>

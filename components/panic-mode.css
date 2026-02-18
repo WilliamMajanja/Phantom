@@ -1,0 +1,117 @@
+
+/* panic-mode.css */
+
+/* --- THE TRIGGER CLASS --- */
+body.panic-state {
+    --surface: #000000;
+    --text-main: #ff0000; /* HARD RED */
+    --accent: #ff0000 !important;
+    --text: #ff0000 !important;
+    --text-light: #880000 !important;
+    
+    background-color: var(--surface);
+    color: var(--text-main);
+    overflow: hidden; 
+    
+    /* Global screen shake */
+    animation: screen-shake 0.15s infinite;
+}
+
+/* Force elements to inherit panic colors */
+body.panic-state .glass-panel {
+    border-color: #ff0000 !important;
+    box-shadow: 0 0 20px rgba(255,0,0,0.2) !important;
+}
+
+body.panic-state button {
+    border-color: #ff0000 !important;
+    color: #ff0000 !important;
+}
+
+/* Force images to Tactical Red */
+body.panic-state img {
+    filter: grayscale(100%) sepia(100%) hue-rotate(-50deg) saturate(600%) contrast(1.2);
+}
+
+/* --- TEXT GLITCH EFFECT --- */
+body.panic-state h1, 
+body.panic-state h2, 
+body.panic-state h3,
+body.panic-state .font-mono {
+    position: relative;
+    font-family: 'Courier New', monospace !important;
+    text-transform: uppercase;
+    font-weight: 900;
+    
+    /* Chromatic Aberration (RGB Split) */
+    text-shadow: 
+        2px 0 #fff, 
+        -2px 0 #00ff00;
+    
+    animation: text-glitch 0.3s infinite linear alternate-reverse;
+}
+
+/* --- CRT SCANLINE TEARING --- */
+body.panic-state::before {
+    content: "SYSTEM FAILURE // PURGING MEMORY";
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw;
+    background: transparent;
+    z-index: 9999;
+    pointer-events: none;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 5vw;
+    color: rgba(255, 0, 0, 0.2);
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    white-space: nowrap;
+}
+
+/* --- ANIMATIONS --- */
+
+@keyframes screen-shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+@keyframes text-glitch {
+    0% {
+        clip-path: inset(40% 0 61% 0);
+        transform: skew(0.5deg);
+    }
+    20% {
+        clip-path: inset(92% 0 1% 0);
+        transform: skew(2deg);
+    }
+    40% {
+        clip-path: inset(43% 0 1% 0);
+        transform: skew(0.5deg);
+    }
+    60% {
+        clip-path: inset(25% 0 58% 0);
+        transform: skew(2deg);
+    }
+    80% {
+        clip-path: inset(54% 0 7% 0);
+        transform: skew(0.5deg);
+    }
+    100% {
+        clip-path: inset(58% 0 43% 0);
+        transform: skew(2deg);
+    }
+}
