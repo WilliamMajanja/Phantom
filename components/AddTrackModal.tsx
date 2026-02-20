@@ -37,6 +37,7 @@ const AddTrackModal: React.FC<AddTrackModalProps> = ({ isOpen, onClose, onSelect
             { type: InstrumentType.BASS_SUB_808, label: 'SUB_TITAN', desc: 'Deep sine sub-bass with saturation.' },
             { type: InstrumentType.LEAD_PWM, label: 'LEAD_CYBER', desc: 'Detuned pulse/saw hybrid lead.' },
             { type: InstrumentType.PAD_CHOIR, label: 'PAD_ANGEL', desc: 'Formant-filtered vocal synth.' },
+            { type: InstrumentType.PAD_ETHEREAL, label: 'PAD_ETHER', desc: 'Multi-oscillator atmospheric swell.' },
             { type: InstrumentType.ARP_PLUCK, label: 'ARP_SYNTH', desc: 'Short-decay triangle for arpeggios.' },
             { type: InstrumentType.FX_GLITCH, label: 'FX_DATABEND', desc: 'Randomized FM noise burst.' },
         ],

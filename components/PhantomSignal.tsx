@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { phantomProtocol } from '../services/phantomProtocol';
+import { radioService } from '../services/radioService';
 import Knob from './Knob';
 
 interface PhantomSignalProps {
@@ -14,9 +15,17 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
   const [killSwitch, setKillSwitch] = useState(false);
   const [isArmed, setIsArmed] = useState(false); // Safety Hatch State
   const [frequency, setFrequency] = useState(101.1);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [inputMsg, setInputMsg] = useState('');
 
   useEffect(() => {
     phantomProtocol.initialize().then(setMidiReady);
+    
+    const cleanup = radioService.onMessage((msg) => {
+      setMessages(prev => [...prev.slice(-4), msg]); // Keep last 5
+    });
+    
+    return () => { cleanup(); };
   }, []);
 
   const toggleBroadcast = () => {
@@ -51,9 +60,18 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
 
   const handleFrequencyChange = (val: number) => {
       setFrequency(val);
+      radioService.joinFrequency(val.toFixed(1));
       if (midiReady) {
           phantomProtocol.setFrequency(val);
       }
+  };
+
+  const sendRadioMsg = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!inputMsg.trim()) return;
+      radioService.transmit({ text: inputMsg });
+      setMessages(prev => [...prev.slice(-4), { from: 'YOU', payload: { text: inputMsg } }]);
+      setInputMsg('');
   };
 
   return (
@@ -109,6 +127,30 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
        <div className="w-full bg-gray-900/50 border border-gray-800 p-2 rounded text-center flex justify-between items-center px-4">
             <span className="text-[9px] text-gray-500 font-bold tracking-widest uppercase">CARRIER FREQ</span>
             <span className="text-lg font-mono text-accent font-bold">{frequency.toFixed(1)} <span className="text-xs text-gray-600">MHz</span></span>
+       </div>
+
+       {/* RADIO CHAT / NODE MESSENGER */}
+       <div className="w-full flex flex-col gap-2 bg-gray-900/30 p-3 border border-gray-800 rounded">
+           <div className="text-[9px] font-bold text-gray-600 uppercase tracking-widest mb-1">Node Relay // Freq {frequency.toFixed(1)}</div>
+           <div className="h-24 overflow-y-auto flex flex-col gap-1 font-mono text-[10px] custom-scrollbar">
+               {messages.length === 0 && <div className="text-gray-700 italic">No incoming signals...</div>}
+               {messages.map((m, i) => (
+                   <div key={i} className="flex gap-2">
+                       <span className={m.from === 'YOU' ? 'text-accent' : 'text-blue-400'}>[{m.from?.slice(0,8)}]</span>
+                       <span className="text-gray-300">{m.payload.text}</span>
+                   </div>
+               ))}
+           </div>
+           <form onSubmit={sendRadioMsg} className="flex gap-2 mt-2">
+               <input 
+                  type="text" 
+                  value={inputMsg}
+                  onChange={(e) => setInputMsg(e.target.value)}
+                  placeholder="TRANSMIT..."
+                  className="flex-1 bg-black border border-gray-800 text-[10px] p-2 text-accent focus:border-accent outline-none"
+               />
+               <button type="submit" className="px-3 bg-gray-800 text-[9px] font-bold text-gray-400 hover:bg-accent hover:text-black">SEND</button>
+           </form>
        </div>
 
       {/* DEAD MAN'S SWITCH (Refined Safety Mechanism) */}

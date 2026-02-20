@@ -3,7 +3,7 @@
 import React from 'react';
 import { Track, InstrumentType } from '../types';
 import Knob from './Knob';
-import { midiService } from '../services/midiService';
+import { phantomProtocol } from '../services/phantomProtocol';
 
 interface TrackInspectorProps {
   track: Track;
@@ -24,7 +24,7 @@ const TrackInspector: React.FC<TrackInspectorProps> = ({ track, onChange, onDele
     });
 
     // 2. Send MIDI CC (TR-8S Control)
-    midiService.sendTR8SParam(track.type, key as string, value);
+    phantomProtocol.sendTR8SParam(track.type, key as string, value);
   };
 
   const updatePan = (val: number) => {

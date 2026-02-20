@@ -1,6 +1,6 @@
 {
-  "name": "PHANTOM",
-  "description": "AI-Native Decentralized Drum Machine running on the Shadow Core.",
+  "name": "PHANTOM | AI-Native Tactical Audio Workstation",
+  "description": "A decentralized, AI-augmented drum machine and synthesizer running on the Shadow Core audio engine. Features real-time neural pattern generation, blockchain provenance, and mesh network synchronization.",
   "requestFramePermissions": [
     "microphone"
   ]

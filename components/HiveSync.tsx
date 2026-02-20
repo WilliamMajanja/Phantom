@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { HiveState } from '../types';
+import { shadowCore } from '../services/audio/ShadowCore';
+import { radioService } from '../services/radioService';
 
 const HiveSync: React.FC = () => {
   const [hive, setHive] = useState<HiveState>({
@@ -9,6 +11,7 @@ const HiveSync: React.FC = () => {
     peers: 0,
     latency: 0
   });
+  const [isBroadcastingVoice, setIsBroadcastingVoice] = useState(false);
 
   // Simulation of LoRa activity
   useEffect(() => {
@@ -30,6 +33,18 @@ const HiveSync: React.FC = () => {
 
   const toggleRole = () => {
       setHive(prev => ({ ...prev, role: prev.role === 'MASTER' ? 'SLAVE' : 'MASTER' }));
+  };
+
+  const toggleVoiceLoRa = () => {
+      if (!isBroadcastingVoice) {
+          shadowCore.startLoRaBroadcast((base64) => {
+              radioService.transmitLoRaVoice(base64);
+          });
+          setIsBroadcastingVoice(true);
+      } else {
+          shadowCore.stopLoRaBroadcast();
+          setIsBroadcastingVoice(false);
+      }
   };
 
   return (
@@ -55,6 +70,15 @@ const HiveSync: React.FC = () => {
                 className={`text-[10px] font-mono px-2 py-1 rounded bg-plate shadow-neo-inner ${hive.role === 'MASTER' ? 'text-accent' : 'text-text'}`}
               >
                   {hive.role}
+              </button>
+          </div>
+
+          <div className="flex flex-col gap-2">
+              <button 
+                onClick={toggleVoiceLoRa}
+                className={`w-full py-2 text-[10px] font-bold border transition-all ${isBroadcastingVoice ? 'bg-accent text-black border-accent animate-pulse' : 'bg-black text-accent border-accent/30 hover:border-accent'}`}
+              >
+                  {isBroadcastingVoice ? 'VOICE_TX_ACTIVE' : 'TRANSMIT_VOICE_OVER_LORA'}
               </button>
           </div>
 

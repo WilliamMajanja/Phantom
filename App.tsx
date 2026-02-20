@@ -22,6 +22,7 @@ import { shadowCore } from './services/audio/ShadowCore';
 import { anchorSpirit, captureSpiritHash } from './services/spiritLedger';
 import { phantomProtocol } from './services/phantomProtocol';
 import { clusterService } from './services/clusterService';
+import { radioService } from './services/radioService';
 
 // TAB DEFINITIONS
 enum Tab {
@@ -102,6 +103,8 @@ const App: React.FC = () => {
 
   // Core Scheduler
   useEffect(() => {
+    radioService.connect();
+    
     shadowCore.setOnStepCallback((step) => {
         setCurrentStep(step);
         

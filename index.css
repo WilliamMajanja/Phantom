@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "JetBrains Mono", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-surface: #050505;
+  --color-plate: #0a0a0a;
+  --color-text-main: #e0e0e0;
+  --color-text-light: #555555;
+  --color-accent: #00ff41;
+  --color-indicator: #00ff41;
+  --color-knob: #1a1a1a;
+
+  --shadow-neo: 0 1px 0 rgba(255,255,255,0.05), 0 -1px 0 rgba(0,0,0,0.8);
+  --shadow-neo-sm: 0 1px 0 rgba(255,255,255,0.05);
+  --shadow-neo-inner: inset 0 2px 4px rgba(0,0,0,0.9);
+  --shadow-neo-pressed: inset 0 2px 5px #000, 0 0 0 1px var(--color-accent);
+  --shadow-glow: 0 0 10px var(--color-accent), 0 0 20px var(--color-accent);
+
+  @keyframes scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.92; }
+  }
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  --animate-scan: scan 8s linear infinite;
+  --animate-flicker: flicker 0.15s infinite;
+  --animate-fade-in: fadeIn 0.5s ease-out;
+  --animate-pulse-slow: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@layer base {
+  body {
+    @apply bg-black text-gray-300 font-mono overflow-hidden;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-black/80 border border-white/10 backdrop-blur-xl shadow-2xl;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-1 h-1;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-800 hover:bg-accent transition-colors;
+  }
+}
+
+.clip-path-slant {
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 90% 100%, 0 100%);
+}
+
+.text-glow {
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.6);
+}
+
+.box-shadow-glow {
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
+}

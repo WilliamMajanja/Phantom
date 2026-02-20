@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { midiService } from '../services/midiService';
+import { phantomProtocol } from '../services/phantomProtocol';
 import Knob from './Knob';
 
 const BroadcastController: React.FC = () => {
@@ -9,7 +9,7 @@ const BroadcastController: React.FC = () => {
   const [frequency, setFrequency] = useState(101.1);
 
   useEffect(() => {
-    midiService.initialize().then(setMidiReady);
+    phantomProtocol.initialize().then(setMidiReady);
   }, []);
 
   const toggleBroadcast = () => {
@@ -18,20 +18,20 @@ const BroadcastController: React.FC = () => {
     
     // Send MIDI Signal to Mixxx (Talkover / Broadcast)
     if (midiReady) {
-        midiService.sendCC(51, newState ? 127 : 0);
+        phantomProtocol.sendCC(51, newState ? 127 : 0);
     }
   };
 
   const handleFilterChange = (val: number) => {
       setFilterValue(val);
       if (midiReady) {
-          midiService.setTransmissionFilter(val);
+          phantomProtocol.setTransmissionFilter(val);
       }
   };
 
   const handleDropID = () => {
       if (midiReady) {
-          midiService.triggerStationID();
+          phantomProtocol.triggerStationID();
       }
   };
 

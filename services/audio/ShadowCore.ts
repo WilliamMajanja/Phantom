@@ -24,6 +24,13 @@ export class ShadowCore {
   private reverbNode: ConvolverNode | null = null;
   private reverbSendGain: GainNode | null = null;
 
+  // Mic Input
+  private micStream: MediaStream | null = null;
+  private micNode: MediaStreamAudioSourceNode | null = null;
+  private micGain: GainNode | null = null;
+  private micDuckingGain: GainNode | null = null;
+  private loraRecorder: MediaRecorder | null = null;
+
   // Stutter State
   private stutterActive: boolean = false;
   private stutterInterval: number = 4;
@@ -68,7 +75,6 @@ export class ShadowCore {
   private prismOffset: number = 0;
 
   // Mic / Input
-  private micGain: GainNode | null = null;
   private duckingAmount: number = 0; 
 
   private currentStep: number = 0;
@@ -608,9 +614,75 @@ export class ShadowCore {
       if (this.masterGain && this.audioContext) this.masterGain.gain.setTargetAtTime(val, this.audioContext.currentTime, 0.1); 
   }
   
-  public initMic(deviceId?: string) { /* Stub */ }
-  public setMicGain(val: number) { /* Stub */ }
-  public setDuckingAmount(val: number) { /* Stub */ }
+  public async initMic(deviceId?: string) {
+      if (!this.audioContext) await this.initialize();
+      
+      try {
+          if (this.micStream) {
+              this.micStream.getTracks().forEach(t => t.stop());
+          }
+
+          this.micStream = await navigator.mediaDevices.getUserMedia({
+              audio: deviceId ? { deviceId: { exact: deviceId } } : true
+          });
+
+          this.micNode = this.audioContext!.createMediaStreamSource(this.micStream);
+          this.micGain = this.audioContext!.createGain();
+          this.micGain.gain.value = 0; // Start muted
+
+          this.micDuckingGain = this.audioContext!.createGain();
+          
+          this.micNode.connect(this.micGain);
+          this.micGain.connect(this.micDuckingGain);
+          this.micDuckingGain.connect(this.masterGain!);
+
+          console.log("[ShadowCore] Mic Initialized:", deviceId || "Default");
+      } catch (e) {
+          console.error("[ShadowCore] Mic Init Failed:", e);
+      }
+  }
+
+  public setMicGain(val: number) {
+      if (this.micGain && this.audioContext) {
+          this.micGain.gain.setTargetAtTime(val, this.audioContext.currentTime, 0.05);
+      }
+  }
+
+  public setDuckingAmount(val: number) {
+      // In a real implementation, we'd use the mic signal to duck the master music
+      // For now, we'll just store the value
+      console.log("[ShadowCore] Ducking set to:", val);
+  }
+
+  public startLoRaBroadcast(onData: (base64: string) => void) {
+      if (!this.micStream) return;
+
+      // Use a separate MediaRecorder for LoRa to get small chunks
+      this.loraRecorder = new MediaRecorder(this.micStream, {
+          mimeType: 'audio/webm;codecs=opus'
+      });
+
+      this.loraRecorder.ondataavailable = async (e) => {
+          if (e.data.size > 0) {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                  const base64 = (reader.result as string).split(',')[1];
+                  onData(base64);
+              };
+              reader.readAsDataURL(e.data);
+          }
+      };
+
+      this.loraRecorder.start(500); // 500ms chunks for "LoRa" feel
+      console.log("[ShadowCore] LoRa Broadcast Started");
+  }
+
+  public stopLoRaBroadcast() {
+      if (this.loraRecorder && this.loraRecorder.state !== 'inactive') {
+          this.loraRecorder.stop();
+          console.log("[ShadowCore] LoRa Broadcast Stopped");
+      }
+  }
 
   public setTracks(tracks: Track[]) { this.tracks = tracks; }
   public setBpm(bpm: number) {

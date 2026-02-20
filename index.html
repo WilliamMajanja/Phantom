@@ -4,58 +4,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PHANTOM | AI-Native Decentralized Drum Machine</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>PHANTOM | AI-Native Tactical Audio Workstation</title>
     <!-- JetBrains Mono for that Cyberpunk Terminal feel -->
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              surface: 'var(--surface)',
-              plate: 'var(--plate)',
-              text: 'var(--text)',
-              textLight: 'var(--text-light)',
-              accent: 'var(--accent)', 
-              indicator: 'var(--accent)', 
-              knob: 'var(--knob)',
-            },
-            fontFamily: {
-              sans: ['JetBrains Mono', 'monospace'],
-              mono: ['JetBrains Mono', 'monospace'],
-            },
-            boxShadow: {
-              'neo': 'var(--shadow-neo)',
-              'neo-sm': 'var(--shadow-neo-sm)',
-              'neo-inner': 'var(--shadow-neo-inner)',
-              'neo-pressed': 'var(--shadow-neo-pressed)',
-              'glow': '0 0 10px var(--accent), 0 0 20px var(--accent)',
-            },
-            animation: {
-              'scan': 'scan 8s linear infinite',
-              'flicker': 'flicker 0.15s infinite',
-              'fade-in': 'fadeIn 0.5s ease-out',
-              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            },
-            keyframes: {
-              scan: {
-                '0%': { transform: 'translateY(-100%)' },
-                '100%': { transform: 'translateY(100%)' },
-              },
-              flicker: {
-                '0%, 100%': { opacity: '1' },
-                '50%': { opacity: '0.92' },
-              },
-              fadeIn: {
-                '0%': { opacity: '0', transform: 'translateY(10px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
-              }
-            }
-          }
-        }
-      }
-    </script>
     <style>
       :root {
         /* PHANTOM: Tactical Night Mode v3 */
@@ -180,9 +131,11 @@
 }
 </script>
 <script type="module" src="./index.tsx"></script>
+<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div class="scanline"></div>
     <div id="root"></div>
-  </body>
+  <script type="module" src="/index.tsx"></script>
+</body>
 </html>
