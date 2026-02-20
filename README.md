@@ -1,92 +1,75 @@
 
-# PHANTOM | AI-Native Decentralized Audio Workstation
+# PHANTOM | AI-Native Tactical Audio Workstation
 
 <div align="center">
-  <img src="public/phantom_logo.png" alt="Phantom Logo" width="120" />
   <h3>The Ghost in the Machine</h3>
   <p><strong>Developed by Infinity Collaborations SDH</strong></p>
   
   [![License: MIT](https://img.shields.io/badge/License-MIT-00ff41.svg)](https://opensource.org/licenses/MIT)
   [![Platform](https://img.shields.io/badge/Hardware-Raspberry_Pi_5-red)](https://www.raspberrypi.com/)
-  [![Core](https://img.shields.io/badge/AI-Gemini_1.5_Flash-blue)]()
+  [![Core](https://img.shields.io/badge/AI-Gemini_3_Flash-blue)]()
+  [![Network](https://img.shields.io/badge/Protocol-LoRa_Mesh-orange)]()
 </div>
 
 ---
 
 ## 🌌 The Concept
-**PHANTOM** is a decentralized instrument that exists between the Edge and the Cloud. 
-It uses a **Raspberry Pi 5** to process audio in real-time (via NPU) and **Google Gemini** to compose patterns based on abstract prompts. Every session is hashed to the **Minima Blockchain**, creating a permanent digital soul for your music.
+**PHANTOM** is a tactical, decentralized instrument designed for the Edge. 
+It combines real-time audio synthesis via the **ShadowCore Engine**, AI-driven composition through the **GhostBridge**, and resilient communication via **LoRa Mesh** and **Radio Relay**. Every pattern is anchored to the **Minima Blockchain**, ensuring immutable provenance of creative output.
 
 ---
 
 ## 🚀 Quick Start (Web Simulation)
-Run the interface and audio engine on your Mac/PC for development.
+Run the full-stack interface and audio engine in your local environment.
 
-1.  **Install**
+1.  **Install Dependencies**
     ```bash
     npm install
     ```
 
-2.  **Configure AI**
-    Create a `.env` file with your Gemini API Key:
-    ```env
-    API_KEY=AIzaSy...
-    ```
-
-3.  **Launch**
+2.  **Launch the Core**
     ```bash
-    npm start
+    npm run dev
     ```
-    Access at `http://localhost:3000`.
+    Access the workstation at `http://localhost:3000`.
 
 ---
 
-## 🛠️ Hardware Forge (Raspberry Pi)
-Turn a Raspberry Pi into a dedicated PHANTOM Node.
+## 📡 Tactical Communications
 
-### Requirements
-*   **Compute:** Raspberry Pi 5 (8GB Recommended).
-*   **Storage:** NVMe SSD (Gen 3) for high-speed sampling.
-*   **AI:** Hailo-8L AI Kit (for Stem Separation).
-*   **Display:** Official 7" Touchscreen or HDMI Display.
+### 1. Hive Protocol (LoRa Mesh)
+*   **Voice Transmission:** Communicate with other PHANTOM nodes over simulated 915MHz LoRa mesh.
+*   **Mesh Networking:** Nodes automatically form a resilient peer-to-peer network for sync and data relay.
+*   **Mic Input:** Supports standard XLR (via interface) or USB microphones for real-time voice-over-LoRa.
 
-### Installation
-1.  **Flash OS:** Use the provided script to burn a custom **Reflex OS** image to your SSD.
-    ```bash
-    cd scripts
-    sudo ./build_phantom_os.sh PI5
-    ```
-2.  **Boot:** Insert the drive into the Pi 5. The system will auto-expand and launch the Kiosk.
-3.  **Cluster:** (Optional) To set up a multi-node swarm, run:
-    ```bash
-    sudo ./scripts/setup_cluster.sh NEXUS
-    ```
+### 2. Radio Relay
+*   **Frequency Hopping:** Join specific frequencies (e.g., 101.1 MHz) to communicate with node clusters.
+*   **Node Messenger:** Send encrypted text bursts between operators on the same carrier frequency.
+*   **TX Filter:** Real-time control over transmission bandwidth and signal purity.
 
 ---
 
 ## 🎛️ Operator's Manual
 
 ### 1. The Sequencer (Core)
-*   **Grid:** Click steps to toggle triggers.
-*   **Ghost Bridge:** Type a prompt like *"Hard techno rumble at 140bpm"* and press Enter. The AI will reprogram the sequencer.
-*   **Modes:** Switch between **TRIG** (Note On), **VEL** (Volume), and **PROB** (Chance) to add humanization.
+*   **Ghost Bridge:** Use the AI sidebar to summon patterns. Try: *"Aggressive industrial breakbeat with heavy sub"* or *"Ethereal ambient swell on sector D"*.
+*   **Reflex Engine:** High-fidelity synthesis including Kick, Snare, FM Bass, Acid 303, and the new **PAD_ETHER** multi-oscillator engine.
 
 ### 2. The Prism Deck (Sampler)
-*   **Import:** Load MP3/WAV files from the **PATCHBAY** tab.
-*   **Stems:** Use the faders to isolate Vocals, Drums, or Bass in real-time.
-*   **Flux:** Use the "Loop Roll" buttons on the **PERFORM** tab for beat-repeat effects.
+*   **Stem Separation:** Isolate Vocals, Drums, or Bass in real-time using the Prism crossover engine.
+*   **Flux Performance:** Engage **Loop Roll** or **Stutter** on the **PERFORMANCE** tab for high-energy transitions.
 
 ### 3. The Spirit Ledger (Blockchain)
-*   **Anchor:** Click the **SECURE_HASH** button in the header.
-*   **Verify:** A receipt is printed (if thermal printer connected) and the hash is sent to the Minima network.
+*   **Provenance:** Every pattern change generates a unique hash anchored to the Minima network.
+*   **Verification:** Ensure the "soul" of your music is untampered and uniquely yours.
 
 ### 4. Safety Protocols
-*   **Kill Switch:** Physical GPIO 17 switch (or UI button) instantly cuts all audio and radio transmission.
-*   **Panic Mode:** If CPU temp > 80°C, the interface goes Red and audio is bit-crushed to warn the operator.
+*   **Dead Man's Switch:** A double-guarded safety hatch (GPIO 17) that instantly kills all audio and radio transmissions in case of compromise.
+*   **Panic Monitor:** Real-time hardware telemetry. If CPU temp exceeds 80°C, the system enters a "Panic" state to protect the hardware.
 
 ---
 
 <div align="center">
   <p><strong>Code is Law. Music is Spirit.</strong></p>
-  <p>© 2024 Infinity Collaborations SDH</p>
+  <p>© 2026 Infinity Collaborations SDH</p>
 </div>

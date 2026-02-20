@@ -42,58 +42,92 @@ export const TR8S_CC_MAP: Record<string, Record<string, number>> = {
 export class PhantomProtocol {
     private midiAccess: MIDIAccess | null = null;
     private output: MIDIOutput | null = null;
+    private isInitialized: boolean = false;
 
     async initialize(): Promise<boolean> {
-        if (!navigator.requestMIDIAccess) {
-            console.warn("WebMIDI is not supported in this browser.");
+        if (this.isInitialized && this.output) return true;
+
+        if (typeof navigator === 'undefined' || !navigator.requestMIDIAccess) {
+            console.warn("WebMIDI is not supported in this environment.");
             return false;
         }
 
         try {
             this.midiAccess = await navigator.requestMIDIAccess();
-            const outputs = Array.from(this.midiAccess.outputs.values());
             
-            const virtualPort = outputs.find(o => 
-                o.name.toLowerCase().includes('virmidi') || 
-                o.name.toLowerCase().includes('through') ||
-                o.name.toLowerCase().includes('loop') ||
-                o.name.toLowerCase().includes('tr-8s')
-            );
-            
-            if (virtualPort) {
-                this.output = virtualPort;
-                console.log(`🎹 PHANTOM Protocol Linked: ${this.output.name}`);
-            } else if (outputs.length > 0) {
-                this.output = outputs[0];
-                console.log(`🎹 PHANTOM Protocol Default: ${this.output.name}`);
-            } else {
-                console.warn("⚠️ No MIDI outputs found.");
-                return false;
-            }
-            
-            return true;
+            // Listen for connection changes
+            this.midiAccess.onstatechange = (e) => {
+                console.log(`🎹 MIDI Device State Change: ${e.port.name} is ${e.port.state}`);
+                if (e.port.type === 'output') {
+                    this.scanOutputs();
+                }
+            };
+
+            const success = this.scanOutputs();
+            this.isInitialized = success;
+            return success;
         } catch (err) {
-            console.error("MIDI Connection Failed", err);
+            console.error("MIDI Access Request Failed", err);
+            return false;
+        }
+    }
+
+    private scanOutputs(): boolean {
+        if (!this.midiAccess) return false;
+
+        const outputs = Array.from(this.midiAccess.outputs.values());
+        
+        // Priority mapping for PHANTOM hardware or virtual ports
+        const virtualPort = outputs.find(o => 
+            o.name.toLowerCase().includes('virmidi') || 
+            o.name.toLowerCase().includes('through') ||
+            o.name.toLowerCase().includes('loop') ||
+            o.name.toLowerCase().includes('tr-8s') ||
+            o.name.toLowerCase().includes('phantom')
+        );
+        
+        if (virtualPort) {
+            this.output = virtualPort;
+            console.log(`🎹 PHANTOM Protocol Linked: ${this.output.name}`);
+            return true;
+        } else if (outputs.length > 0) {
+            this.output = outputs[0];
+            console.log(`🎹 PHANTOM Protocol Default: ${this.output.name}`);
+            return true;
+        } else {
+            this.output = null;
+            console.warn("⚠️ No MIDI outputs found.");
             return false;
         }
     }
 
     sendCC(controller: number, value: number, channel: number = 0) {
-        if (!this.output) return;
-        const status = 0xB0 | channel; 
-        const clampedValue = Math.max(0, Math.min(127, Math.floor(value)));
-        this.output.send([status, controller, clampedValue]);
+        if (!this.output || this.output.state !== 'connected') return;
+        try {
+            const status = 0xB0 | (channel & 0xF); 
+            const clampedValue = Math.max(0, Math.min(127, Math.floor(value)));
+            this.output.send([status, controller, clampedValue]);
+        } catch (e) {
+            console.error("MIDI CC Send Failed", e);
+        }
     }
 
     triggerNote(note: number, velocity: number = 127, channel: number = 0) {
-        if (!this.output) return;
-        const noteOn = 0x90 | channel;
-        const noteOff = 0x80 | channel;
-        
-        this.output.send([noteOn, note, velocity]);
-        setTimeout(() => {
-            this.output?.send([noteOff, note, 0]);
-        }, 100);
+        if (!this.output || this.output.state !== 'connected') return;
+        try {
+            const status = 0x90 | (channel & 0xF);
+            const noteOff = 0x80 | (channel & 0xF);
+            const clampedVel = Math.max(0, Math.min(127, Math.floor(velocity)));
+            
+            this.output.send([status, note, clampedVel]);
+            setTimeout(() => {
+                if (this.output && this.output.state === 'connected') {
+                    this.output.send([noteOff, note, 0]);
+                }
+            }, 100);
+        } catch (e) {
+            console.error("MIDI Note Trigger Failed", e);
+        }
     }
 
     sendTR8SParam(instrumentType: InstrumentType, param: string, value: number) {

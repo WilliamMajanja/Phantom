@@ -118,65 +118,90 @@ export const interpretSignal = async (
     Speak briefly and enigmatically.
   `;
 
-  try {
-    const chat = ai.chats.create({
-      model,
-      config: {
-        tools: tools,
-        temperature: 0.6,
-        systemInstruction: systemInstruction
-      },
-      history: history
-    });
+  const MAX_RETRIES = 2;
+  let attempt = 0;
 
-    const result = await chat.sendMessage({ message: userPrompt });
-    const functionCalls = result.functionCalls;
-    
-    // A. Function Call (Sequencer Update)
-    if (functionCalls && functionCalls.length > 0) {
-      const call = functionCalls[0];
-      if (call.name === 'summon_pattern') {
-        const args = call.args as any;
-        const updates = parseGeneratedState(args, currentState);
-        
-        const trackCount = updates.tracks?.length || 0;
-        const bpmMsg = updates.bpm ? `BPM:${updates.bpm}` : 'BPM:KEEP';
-        const msg = `PROTOCOL_EXECUTED // ${bpmMsg} // RECONFIGURED_${trackCount}_MODULES`;
+  while (attempt <= MAX_RETRIES) {
+    try {
+      const chat = ai.chats.create({
+        model,
+        config: {
+          tools: tools,
+          temperature: 0.6,
+          systemInstruction: systemInstruction
+        },
+        history: history
+      });
 
+      // Add a timeout to the request
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("SIGNAL_TIMEOUT")), 10000)
+      );
+
+      const result = await Promise.race([
+        chat.sendMessage({ message: userPrompt }),
+        timeoutPromise
+      ]) as any;
+
+      const functionCalls = result.functionCalls;
+      
+      // A. Function Call (Sequencer Update)
+      if (functionCalls && functionCalls.length > 0) {
+        const call = functionCalls[0];
+        if (call.name === 'summon_pattern') {
+          const args = call.args as any;
+          const updates = parseGeneratedState(args, currentState);
+          
+          const trackCount = updates.tracks?.length || 0;
+          const bpmMsg = updates.bpm ? `BPM:${updates.bpm}` : 'BPM:KEEP';
+          const msg = `PROTOCOL_EXECUTED // ${bpmMsg} // RECONFIGURED_${trackCount}_MODULES`;
+
+          return {
+              success: true,
+              message: msg,
+              updates: updates
+          };
+        }
+      }
+      
+      // B. Conversational Response (No Update)
+      if (result.text) {
+          return {
+              success: true,
+              message: result.text,
+              updates: undefined
+          };
+      }
+      
+      // C. Fallback (Only if response is empty)
+      const localUpdates = generateLocalPattern(userPrompt, currentState);
+      return {
+          success: true,
+          message: "SIGNAL_WEAK // FALLBACK_TO_LOCAL_GENERATOR",
+          updates: localUpdates
+      };
+
+    } catch (error: any) {
+      attempt++;
+      console.warn(`Ghost Bridge Attempt ${attempt} Failed: ${error.message}`);
+      
+      if (attempt > MAX_RETRIES) {
+        console.warn("Ghost Bridge: Max Retries Exceeded. Switching to Local Mode.");
+        const localUpdates = generateLocalPattern(userPrompt, currentState);
         return {
             success: true,
-            message: msg,
-            updates: updates
+            message: `CONNECTION_LOST (${error.message}) // LOCAL_OVERRIDE_ACTIVE`,
+            updates: localUpdates
         };
       }
+      
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
     }
-    
-    // B. Conversational Response (No Update)
-    if (result.text) {
-        return {
-            success: true,
-            message: result.text,
-            updates: undefined
-        };
-    }
-    
-    // C. Fallback (Only if response is empty)
-    const localUpdates = generateLocalPattern(userPrompt, currentState);
-    return {
-        success: true,
-        message: "SIGNAL_WEAK // FALLBACK_TO_LOCAL_GENERATOR",
-        updates: localUpdates
-    };
-
-  } catch (error) {
-    console.warn("Ghost Bridge Connection Failed. Switching to Local Mode.", error);
-    const localUpdates = generateLocalPattern(userPrompt, currentState);
-    return {
-        success: true,
-        message: "CONNECTION_LOST // LOCAL_OVERRIDE_ACTIVE",
-        updates: localUpdates
-    };
   }
+
+  // Should never reach here due to the return in the catch block
+  return { success: false, message: "UNKNOWN_PROTOCOL_ERROR" };
 };
 
 // --- HELPER: Parse Gemini Output ---

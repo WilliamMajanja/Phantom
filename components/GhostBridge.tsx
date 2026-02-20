@@ -69,15 +69,15 @@ const GhostBridge: React.FC<GhostBridgeProps> = ({ currentState, onUpdate, isPro
              setHistory(prev => [...prev, {
                 id: (Date.now() + 1).toString(),
                 role: 'SYSTEM',
-                text: `ERROR: ${response.message}`,
+                text: `CRITICAL_ERROR: ${response.message}. PROTOCOL_HALTED.`,
                 timestamp: Date.now()
             }]);
         }
-    } catch (err) {
+    } catch (err: any) {
         setHistory(prev => [...prev, {
             id: (Date.now() + 1).toString(),
             role: 'SYSTEM',
-            text: 'CRITICAL FAILURE IN NEURAL LINK.',
+            text: `NEURAL_LINK_SEVERED: ${err.message || 'UNKNOWN_FAILURE'}. ATTEMPTING_RECOVERY...`,
             timestamp: Date.now()
         }]);
     } finally {
@@ -162,27 +162,46 @@ const GhostBridge: React.FC<GhostBridgeProps> = ({ currentState, onUpdate, isPro
 
             {/* INPUT AREA */}
             <div className="p-4 border-t border-gray-800 bg-black">
+                {/* QUICK CONTEXT TAGS */}
+                <div className="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-1">
+                    {['GENERATE', 'REMIX', 'MUTATE', 'CLEAR', 'EVOLVE'].map(cmd => (
+                        <button
+                            key={cmd}
+                            onClick={() => setPrompt(prev => prev ? `${prev}\n/${cmd}` : `/${cmd}`)}
+                            className="px-2 py-1 bg-gray-900 border border-gray-800 text-[8px] text-gray-500 hover:text-accent hover:border-accent transition-all whitespace-nowrap"
+                        >
+                            {cmd}
+                        </button>
+                    ))}
+                </div>
+
                 <form onSubmit={handleSubmit} className="relative">
-                    <input
-                        type="text"
+                    <textarea
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="ENTER COMMAND..."
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSubmit(e as any);
+                            }
+                        }}
+                        placeholder="ENTER COMMAND... (SHIFT+ENTER FOR NEW LINE)"
                         disabled={isBusy}
-                        className="w-full bg-gray-900 border border-gray-700 text-gray-200 p-4 pr-12 text-xs font-mono focus:border-accent focus:outline-none transition-colors placeholder-gray-600"
+                        rows={3}
+                        className="w-full bg-gray-900 border border-gray-700 text-gray-200 p-4 pr-12 text-xs font-mono focus:border-accent focus:outline-none transition-colors placeholder-gray-600 resize-none custom-scrollbar"
                         autoFocus
                     />
                     <button 
                         type="submit"
-                        disabled={!prompt || isBusy}
-                        className="absolute right-2 top-2 bottom-2 aspect-square flex items-center justify-center text-gray-500 hover:text-accent disabled:opacity-30 transition-colors"
+                        disabled={!prompt.trim() || isBusy}
+                        className="absolute right-2 bottom-4 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-accent disabled:opacity-30 transition-colors bg-black/50 rounded"
                     >
                         ⏎
                     </button>
                 </form>
                 <div className="mt-2 flex justify-between text-[8px] text-gray-600 font-mono uppercase">
-                    <span>Model: GEMINI-1.5-FLASH</span>
-                    <span>Context: LIVE</span>
+                    <span>Model: GEMINI-3-FLASH</span>
+                    <span>Context: MULTI_LINE_ENABLED</span>
                 </div>
             </div>
         </div>
