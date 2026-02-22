@@ -1,75 +1,86 @@
-
-# PHANTOM | AI-Native Tactical Audio Workstation
+# 💀 PHANTOM | AI-NATIVE TACTICAL DAW
+### *The Ghost in the Machine*
 
 <div align="center">
-  <h3>The Ghost in the Machine</h3>
-  <p><strong>Developed by Infinity Collaborations SDH</strong></p>
+  <p><strong>A Decentralized Audio Workstation for the Edge</strong></p>
   
-  [![License: MIT](https://img.shields.io/badge/License-MIT-00ff41.svg)](https://opensource.org/licenses/MIT)
-  [![Platform](https://img.shields.io/badge/Hardware-Raspberry_Pi_5-red)](https://www.raspberrypi.com/)
-  [![Core](https://img.shields.io/badge/AI-Gemini_3_Flash-blue)]()
-  [![Network](https://img.shields.io/badge/Protocol-LoRa_Mesh-orange)]()
+  [![License: MIT](https://img.shields.io/badge/License-MIT-00ff41.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+  [![Platform](https://img.shields.io/badge/Hardware-Raspberry_Pi_5-red?style=for-the-badge)](https://www.raspberrypi.com/)
+  [![Core](https://img.shields.io/badge/AI-Gemini_3_Flash-blue?style=for-the-badge)]()
+  [![Network](https://img.shields.io/badge/Protocol-LoRa_Mesh-orange?style=for-the-badge)]()
 </div>
 
 ---
 
-## 🌌 The Concept
-**PHANTOM** is a tactical, decentralized instrument designed for the Edge. 
-It combines real-time audio synthesis via the **ShadowCore Engine**, AI-driven composition through the **GhostBridge**, and resilient communication via **LoRa Mesh** and **Radio Relay**. Every pattern is anchored to the **Minima Blockchain**, ensuring immutable provenance of creative output.
+## 🌌 THE NEURAL CORE
+**PHANTOM** is not just a DAW; it's a tactical instrument designed for resilient creative output in any environment. By merging high-fidelity synthesis with decentralized communication protocols, PHANTOM exists where the cloud meets the dirt.
+
+### ⚡ Key Technologies
+*   **ShadowCore Engine**: Real-time 32-bit float audio processing with zero-latency signal paths.
+*   **GhostBridge V2**: Neural pattern synthesis powered by Gemini 3 Flash, supporting multi-line tactical commands.
+*   **Hive Protocol**: Peer-to-peer LoRa Mesh networking for voice and data sync across nodes.
+*   **Spirit Ledger**: Immutable session anchoring via the Minima Blockchain.
 
 ---
 
-## 🚀 Quick Start (Web Simulation)
-Run the full-stack interface and audio engine in your local environment.
+## 🚀 DEPLOYMENT
+Launch the workstation in your local simulation environment.
 
-1.  **Install Dependencies**
-    ```bash
-    npm install
-    ```
+```bash
+# Clone and enter the sector
+git clone https://github.com/infinity-collaborations/phantom.git
+cd phantom
 
-2.  **Launch the Core**
-    ```bash
-    npm run dev
-    ```
-    Access the workstation at `http://localhost:3000`.
+# Initialize modules
+npm install
 
----
-
-## 📡 Tactical Communications
-
-### 1. Hive Protocol (LoRa Mesh)
-*   **Voice Transmission:** Communicate with other PHANTOM nodes over simulated 915MHz LoRa mesh.
-*   **Mesh Networking:** Nodes automatically form a resilient peer-to-peer network for sync and data relay.
-*   **Mic Input:** Supports standard XLR (via interface) or USB microphones for real-time voice-over-LoRa.
-
-### 2. Radio Relay
-*   **Frequency Hopping:** Join specific frequencies (e.g., 101.1 MHz) to communicate with node clusters.
-*   **Node Messenger:** Send encrypted text bursts between operators on the same carrier frequency.
-*   **TX Filter:** Real-time control over transmission bandwidth and signal purity.
+# Engage the core
+npm run dev
+```
+> **Access Point:** `http://localhost:3000`
 
 ---
 
-## 🎛️ Operator's Manual
+## 📡 TACTICAL COMMS
+PHANTOM nodes communicate via a multi-layered protocol stack designed for reliability.
 
-### 1. The Sequencer (Core)
-*   **Ghost Bridge:** Use the AI sidebar to summon patterns. Try: *"Aggressive industrial breakbeat with heavy sub"* or *"Ethereal ambient swell on sector D"*.
-*   **Reflex Engine:** High-fidelity synthesis including Kick, Snare, FM Bass, Acid 303, and the new **PAD_ETHER** multi-oscillator engine.
+| Module | Protocol | Function |
+| :--- | :--- | :--- |
+| **HIVE** | LoRa Mesh (915MHz) | Real-time voice-over-mesh and peer discovery. |
+| **RELAY** | Radio RF | Frequency-hopped text messenger and signal relay. |
+| **BRIDGE** | WebSocket | High-speed local cluster synchronization. |
 
-### 2. The Prism Deck (Sampler)
-*   **Stem Separation:** Isolate Vocals, Drums, or Bass in real-time using the Prism crossover engine.
-*   **Flux Performance:** Engage **Loop Roll** or **Stutter** on the **PERFORMANCE** tab for high-energy transitions.
+---
 
-### 3. The Spirit Ledger (Blockchain)
-*   **Provenance:** Every pattern change generates a unique hash anchored to the Minima network.
-*   **Verification:** Ensure the "soul" of your music is untampered and uniquely yours.
+## 🎛️ OPERATOR INTERFACE
 
-### 4. Safety Protocols
-*   **Dead Man's Switch:** A double-guarded safety hatch (GPIO 17) that instantly kills all audio and radio transmissions in case of compromise.
-*   **Panic Monitor:** Real-time hardware telemetry. If CPU temp exceeds 80°C, the system enters a "Panic" state to protect the hardware.
+### 🧠 Ghost Bridge (AI)
+The Ghost Bridge is your neural link to the machine. Use the command console to summon complex patterns:
+*   `/GENERATE` - Create a new rhythmic foundation.
+*   `/REMIX` - Re-interpret current instrumentation.
+*   `/EVOLVE` - Gradually increase signal complexity.
+*   *Example:* `"Summon a dark industrial rumble at 140bpm with bit-crushed snares."*
+
+### 💎 Prism Deck (Sampling)
+*   **Stem Isolation**: Real-time parallel crossover engine to split any signal into Vocals, Drums, and Bass.
+*   **Flux FX**: Performance-grade Loop Rollers and Stutter gates for high-intensity transitions.
+
+### 🛡️ Safety & Security
+*   **Dead Man's Switch**: A physical/software safety hatch (GPIO 17) for instant signal blackout.
+*   **Panic Watchdog**: Real-time telemetry monitoring CPU thermals and NPU load.
+
+---
+
+## 🛠️ HARDWARE FORGE
+While the web simulation is powerful, PHANTOM is built for the **Raspberry Pi 5**.
+*   **Compute**: 8GB RAM + NVMe SSD.
+*   **AI**: Hailo-8L NPU for local stem separation.
+*   **Audio**: I2S DAC for low-jitter output.
 
 ---
 
 <div align="center">
-  <p><strong>Code is Law. Music is Spirit.</strong></p>
-  <p>© 2026 Infinity Collaborations SDH</p>
+  <p><strong>CODE IS LAW. MUSIC IS SPIRIT.</strong></p>
+  <p>Developed by <strong>Infinity Collaborations SDH</strong></p>
+  <p>© 2026 // ALL RIGHTS RESERVED</p>
 </div>
