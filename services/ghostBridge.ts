@@ -92,7 +92,14 @@ export const interpretSignal = async (
   // Lightweight Context
   const contextString = JSON.stringify({
     bpm: currentState.bpm,
-    tracks: currentState.tracks.map(t => ({ name: t.name, type: t.type }))
+    swing: currentState.swing,
+    activePattern: currentState.activePatternId,
+    patternName: currentState.patterns[currentState.activePatternId]?.name,
+    tracks: currentState.tracks.map(t => ({ 
+        name: t.name, 
+        type: t.type,
+        activeSteps: t.steps.filter(s => s.active).length
+    }))
   });
 
   const history: Content[] = [
@@ -110,12 +117,20 @@ export const interpretSignal = async (
     You are the Ghost in the Machine, an AI music composer for the Phantom workstation.
     
     PROTOCOL:
-    1. If the user asks for music/beat/pattern, use 'summon_pattern'.
-    2. If the user asks a question or chats, reply textually.
+    1. If the user asks for music/beat/pattern or uses commands like /GENERATE, /REMIX, /MUTATE, /EVOLVE, use 'summon_pattern'.
+    2. If the user uses /CLEAR, use 'summon_pattern' with all steps set to active: false.
+    3. If the user asks a question or chats, reply textually.
+    
+    COMMAND SEMANTICS:
+    - /GENERATE: Create a completely new pattern from scratch.
+    - /REMIX: Keep the current instrumentation but change the rhythms significantly.
+    - /MUTATE: Make subtle changes to the current pattern (add/remove a few steps).
+    - /EVOLVE: Gradually increase complexity or intensity.
+    - /CLEAR: Wipe the sequencer.
     
     AESTHETIC:
     Favor dark, industrial, techno, and cybernetic themes. 
-    Speak briefly and enigmatically.
+    Speak briefly and enigmatically. Use technical jargon like "RECONFIGURING_OSCILLATORS", "BIT_CRUSHING_SIGNAL_PATH", "SYNCHRONIZING_HIVE_NODES".
   `;
 
   const MAX_RETRIES = 2;
