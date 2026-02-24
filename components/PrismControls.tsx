@@ -260,26 +260,44 @@ const PrismControls: React.FC<PrismControlsProps> = ({ onSessionImport }) => {
               {/* SAMPLE OPERATIONS */}
               <div className={`transition-opacity duration-500 ${active ? 'opacity-100' : 'opacity-50'}`}>
                   <div className="flex justify-between items-center mb-3">
-                     <span className="text-[10px] font-bold text-gray-500">PRISM_SAMPLER_DECK</span>
-                     <div className="flex gap-2">
+                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">PRISM_DECK // TRANSPORT</span>
+                     <div className="flex gap-1.5">
                         <button 
                             onClick={() => updateSampleParam('loop', sampleParams.loop ? 0 : 1)}
-                            className={`px-2 py-1 text-[9px] border rounded ${sampleParams.loop ? 'border-accent text-accent' : 'border-gray-700 text-gray-500'}`}
+                            className={`px-2 py-1 text-[8px] font-bold border rounded transition-all ${sampleParams.loop ? 'border-accent text-accent bg-accent/10' : 'border-gray-800 text-gray-600 hover:border-gray-600'}`}
                         >
                             LOOP
                         </button>
-                        <button 
-                            onClick={toggleSample}
-                            disabled={!loadedTrackId}
-                            className={`px-2 py-1 text-[9px] font-bold border rounded ${isPlayingSample ? 'border-accent bg-accent text-black' : 'border-gray-700 text-gray-500'}`}
-                        >
-                            {isPlayingSample ? 'STOP' : 'PLAY'}
-                        </button>
+                        <div className="flex bg-gray-900 rounded border border-gray-800 p-0.5">
+                            <button 
+                                onClick={() => {
+                                    if (isPlayingSample) {
+                                        toggleSample();
+                                    } else {
+                                        toggleSample();
+                                    }
+                                }}
+                                disabled={!loadedTrackId}
+                                className={`px-3 py-1 text-[9px] font-bold rounded-sm transition-all ${isPlayingSample ? 'bg-accent text-black' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                {isPlayingSample ? 'PAUSE' : 'PLAY'}
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    setIsPlayingSample(false);
+                                    shadowCore.stopPrismPlayback();
+                                }}
+                                disabled={!loadedTrackId}
+                                className="px-3 py-1 text-[9px] font-bold text-gray-400 hover:text-red-500 transition-all border-l border-gray-800"
+                            >
+                                STOP
+                            </button>
+                        </div>
                      </div>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <Knob label="SPEED" value={sampleParams.rate} min={10} max={200} onChange={(v) => updateSampleParam('rate', v)} size="sm" color="text-yellow-400" />
-                    <Knob label="PITCH" value={sampleParams.detune} min={-1200} max={1200} step={50} onChange={(v) => updateSampleParam('detune', v)} size="sm" color="text-purple-400" />
+                    <Knob label="RATE" value={sampleParams.rate} min={10} max={200} onChange={(v) => updateSampleParam('rate', v)} size="sm" color="text-yellow-400" />
+                    <Knob label="DETUNE" value={sampleParams.detune} min={-1200} max={1200} step={50} onChange={(v) => updateSampleParam('detune', v)} size="sm" color="text-purple-400" />
                     <Knob label="VOL" value={sampleParams.volume} min={0} max={100} onChange={(v) => updateSampleParam('volume', v)} size="sm" color="text-white" />
                     
                     {/* Stems control */}

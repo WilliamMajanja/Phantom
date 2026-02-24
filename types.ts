@@ -104,6 +104,9 @@ export interface PrismState {
     other: number;
   };
   drumIsolation: boolean;
+  rate: number;
+  detune: number;
+  loop: boolean;
 }
 
 export interface HiveState {
