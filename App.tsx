@@ -191,6 +191,76 @@ const App: React.FC = () => {
       });
   }, []);
 
+  const handleClearTrack = useCallback((trackIndex: number) => {
+      setState(prev => {
+          const patternId = prev.activePatternId;
+          const currentPattern = prev.patterns[patternId];
+          const newTracks = [...currentPattern.tracks];
+          const track = { ...newTracks[trackIndex] };
+          track.steps = track.steps.map(s => ({ ...s, active: false }));
+          newTracks[trackIndex] = track;
+          
+          return {
+              ...prev,
+              tracks: newTracks,
+              patterns: {
+                  ...prev.patterns,
+                  [patternId]: { ...currentPattern, tracks: newTracks }
+              }
+          };
+      });
+  }, []);
+
+  const handleRandomizeTrack = useCallback((trackIndex: number) => {
+      setState(prev => {
+          const patternId = prev.activePatternId;
+          const currentPattern = prev.patterns[patternId];
+          const newTracks = [...currentPattern.tracks];
+          const track = { ...newTracks[trackIndex] };
+          track.steps = track.steps.map(s => ({ 
+              ...s, 
+              active: Math.random() > 0.7,
+              velocity: 0.5 + Math.random() * 0.5,
+              probability: 0.5 + Math.random() * 0.5
+          }));
+          newTracks[trackIndex] = track;
+          
+          return {
+              ...prev,
+              tracks: newTracks,
+              patterns: {
+                  ...prev.patterns,
+                  [patternId]: { ...currentPattern, tracks: newTracks }
+              }
+          };
+      });
+  }, []);
+
+  const handleRandomizeAll = useCallback(() => {
+      setState(prev => {
+          const patternId = prev.activePatternId;
+          const currentPattern = prev.patterns[patternId];
+          const newTracks = currentPattern.tracks.map(track => ({
+              ...track,
+              steps: track.steps.map(s => ({
+                  ...s,
+                  active: Math.random() > 0.8,
+                  velocity: 0.4 + Math.random() * 0.6,
+                  probability: 0.6 + Math.random() * 0.4
+              }))
+          }));
+          
+          return {
+              ...prev,
+              tracks: newTracks,
+              patterns: {
+                  ...prev.patterns,
+                  [patternId]: { ...currentPattern, tracks: newTracks }
+              }
+          };
+      });
+  }, []);
+
   const handleUpdateTrack = useCallback((trackIndex: number, updates: Partial<Track>) => {
       setState(prev => {
           const patternId = prev.activePatternId;
@@ -306,8 +376,8 @@ const App: React.FC = () => {
       <button
           onClick={() => setActiveTab(tab)}
           className={`
-              relative px-6 py-3 text-[10px] font-bold tracking-[0.2em] uppercase transition-all
-              clip-path-slant z-10
+              relative px-3 sm:px-6 py-2 sm:py-3 text-[9px] sm:text-[10px] font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase transition-all
+              clip-path-slant z-10 flex-1 sm:flex-none text-center
               ${activeTab === tab 
                   ? 'bg-accent text-black shadow-[0_0_15px_rgba(0,255,65,0.4)]' 
                   : 'bg-gray-900/50 text-gray-500 hover:text-white hover:bg-gray-800'}
@@ -343,17 +413,17 @@ const App: React.FC = () => {
       />
 
       {/* TOP HUD BAR */}
-      <header className={`h-14 px-6 flex justify-between items-center bg-black/90 border-b border-gray-800/50 backdrop-blur-md z-50 shrink-0 ${focusMode ? '-translate-y-full absolute w-full' : ''} transition-transform duration-300`}>
-        <div className="flex items-center gap-6">
+      <header className={`h-14 px-4 sm:px-6 flex justify-between items-center bg-black/90 border-b border-gray-800/50 backdrop-blur-md z-50 shrink-0 ${focusMode ? '-translate-y-full absolute w-full' : ''} transition-transform duration-300`}>
+        <div className="flex items-center gap-3 sm:gap-6">
            {/* LOGO AREA */}
-           <div className="flex items-center gap-3 group cursor-pointer">
-              <div className="w-8 h-8 bg-black border border-gray-700 flex items-center justify-center relative overflow-hidden group-hover:border-accent transition-colors shadow-neo-sm">
+           <div className="flex items-center gap-2 sm:gap-3 group cursor-pointer">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-black border border-gray-700 flex items-center justify-center relative overflow-hidden group-hover:border-accent transition-colors shadow-neo-sm">
                    <div className="absolute inset-0 bg-accent/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                   <span className="font-black text-lg text-white relative z-10">P</span>
+                   <span className="font-black text-sm sm:text-lg text-white relative z-10">P</span>
               </div>
               <div className="flex flex-col">
-                  <h1 className="text-sm font-bold tracking-[0.2em] text-white leading-none">PHANTOM</h1>
-                  <span className="text-[8px] text-accent tracking-widest mt-0.5 opacity-80">INFINITY COLLABORATIONS SDH</span>
+                  <h1 className="text-[10px] sm:text-sm font-bold tracking-[0.1em] sm:tracking-[0.2em] text-white leading-none">PHANTOM</h1>
+                  <span className="text-[6px] sm:text-[8px] text-accent tracking-widest mt-0.5 opacity-80">INFINITY COLLABORATIONS</span>
               </div>
            </div>
 
@@ -376,11 +446,11 @@ const App: React.FC = () => {
            </div>
         </div>
         
-        <div className="flex gap-3 items-center">
+        <div className="flex gap-2 sm:gap-3 items-center">
             <button 
                 onClick={() => setIsExportOpen(true)}
                 disabled={isKillSwitchActive}
-                className="h-8 px-4 font-bold text-[10px] tracking-wide bg-gray-900 border border-gray-700 text-gray-400 hover:text-accent hover:border-accent hover:bg-black transition-all rounded-sm"
+                className="h-7 sm:h-8 px-2 sm:px-4 font-bold text-[8px] sm:text-[10px] tracking-wide bg-gray-900 border border-gray-700 text-gray-400 hover:text-accent hover:border-accent hover:bg-black transition-all rounded-sm"
             >
                 DATA_EXFIL
             </button>
@@ -389,16 +459,16 @@ const App: React.FC = () => {
               onClick={handleExportSession}
               disabled={isAnchoring || !!provenance || isKillSwitchActive}
               className={`
-                h-8 px-4 font-bold text-[10px] tracking-wide border transition-all flex items-center gap-2 rounded-sm
+                h-7 sm:h-8 px-2 sm:px-4 font-bold text-[8px] sm:text-[10px] tracking-wide border transition-all flex items-center gap-1 sm:gap-2 rounded-sm
                 ${provenance ? 'border-accent text-accent bg-accent/10' : isAnchoring ? 'border-gray-700 text-gray-700' : 'bg-black border-gray-600 text-gray-300 hover:border-white'}
               `}
             >
-              {isAnchoring ? <span className="animate-spin">⟳</span> : provenance ? '⚓ ANCHORED' : 'SECURE_HASH'}
+              {isAnchoring ? <span className="animate-spin text-[10px]">⟳</span> : provenance ? '⚓ ANCHORED' : 'SECURE_HASH'}
             </button>
             
             <button 
                 onClick={() => setFocusMode(true)}
-                className="w-8 h-8 flex items-center justify-center border border-gray-800 text-gray-500 hover:text-white hover:bg-gray-800 transition-all rounded-sm"
+                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center border border-gray-800 text-gray-500 hover:text-white hover:bg-gray-800 transition-all rounded-sm"
                 title="Focus Mode"
             >
                 [ ]
@@ -409,7 +479,7 @@ const App: React.FC = () => {
       {/* NAVIGATION RAIL */}
       {!focusMode && (
           <nav className="h-10 w-full flex border-b border-gray-800 bg-black shrink-0 relative z-40 shadow-neo">
-              <div className="flex-1 flex gap-1 px-4 items-end">
+              <div className="flex-1 flex gap-0.5 sm:gap-1 px-1 sm:px-4 items-end overflow-x-auto no-scrollbar">
                   <TabButton label="SEQUENCER" tab={Tab.CORE} />
                   <TabButton label="PERFORM" tab={Tab.PERFORM} />
                   <TabButton label="PATCHBAY" tab={Tab.PATCHBAY} />
@@ -555,6 +625,9 @@ const App: React.FC = () => {
                                     onUpdateStep={handleUpdateStep}
                                     onSelectTrack={setSelectedTrackIndex} 
                                     selectedTrackIndex={selectedTrackIndex} 
+                                    onClearTrack={handleClearTrack}
+                                    onRandomizeTrack={handleRandomizeTrack}
+                                    onRandomizeAll={handleRandomizeAll}
                                 />
                             </div>
                         </div>

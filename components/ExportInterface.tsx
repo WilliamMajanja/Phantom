@@ -26,6 +26,14 @@ const ExportInterface: React.FC<ExportInterfaceProps> = ({ isOpen, onClose, stat
     };
 
     // --- AUDIO EXPORT ---
+    // --- JSON EXPORT ---
+    const handleJsonExport = () => {
+        const sessionData = JSON.stringify(state, null, 2);
+        const blob = new Blob([sessionData], { type: 'application/json' });
+        const safeName = filename.replace(/[^a-z0-9-_]/gi, '_');
+        downloadBlob(blob, `${safeName}.json`);
+    };
+
     const handleAudioExport = (format: 'webm' | 'wav') => {
         if (isRecording) return;
         setIsRecording(true);
@@ -128,6 +136,22 @@ const ExportInterface: React.FC<ExportInterfaceProps> = ({ isOpen, onClose, stat
                                 <p className="text-[10px] text-gray-500 mt-1">OPUS CODEC / WEB OPTIMIZED</p>
                             </div>
                             <span className="text-2xl opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all">💾</span>
+                        </div>
+                        <div className="absolute inset-0 bg-accent/10 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
+                    </button>
+
+                    {/* OPTION 3: JSON SESSION */}
+                    <button 
+                        onClick={handleJsonExport}
+                        disabled={isRecording}
+                        className="w-full group relative overflow-hidden bg-gray-900 border border-gray-700 hover:border-accent p-4 text-left transition-all disabled:opacity-50"
+                    >
+                         <div className="relative z-10 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-accent font-bold text-sm tracking-wider group-hover:text-white">PHANTOM SESSION (.JSON)</h3>
+                                <p className="text-[10px] text-gray-500 mt-1">FULL STATE RECOVERY / LOCAL BACKUP</p>
+                            </div>
+                            <span className="text-2xl opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all">⚙️</span>
                         </div>
                         <div className="absolute inset-0 bg-accent/10 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
                     </button>

@@ -203,38 +203,38 @@ const PrismControls: React.FC<PrismControlsProps> = ({ onSessionImport }) => {
   };
 
   return (
-    <div className="glass-panel p-6 flex flex-col gap-8 h-full bg-black/50">
+    <div className="glass-panel p-4 sm:p-6 flex flex-col gap-6 sm:gap-8 h-full bg-black/50">
       
       <div className="flex justify-between items-center border-b border-white/10 pb-2">
          <div className="flex flex-col">
-            <span className="text-sm text-textLight font-bold tracking-widest uppercase">I/O Matrix</span>
-            <span className="text-[10px] text-accent font-mono">ROUTING // SAMPLER // FX</span>
+            <span className="text-xs sm:text-sm text-textLight font-bold tracking-widest uppercase">I/O Matrix</span>
+            <span className="text-[8px] sm:text-[10px] text-accent font-mono">ROUTING // SAMPLER // FX</span>
          </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
           
           {/* LEFT COLUMN: SOURCE & SAMPLER */}
           <div className="space-y-6">
               
               {/* DATA INGEST */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input type="file" ref={sessionInputRef} onChange={handleSessionFile} accept=".json" className="hidden" />
                   <button 
                      onClick={() => sessionInputRef.current?.click()}
-                     className="bg-gray-900 border border-gray-700 hover:border-accent p-3 text-left group transition-all"
+                     className="bg-gray-900 border border-gray-700 hover:border-accent p-2 sm:p-3 text-left group transition-all"
                   >
-                      <div className="text-[9px] text-gray-500 group-hover:text-accent font-bold mb-1">DATA IMPORT</div>
-                      <div className="text-xs text-white font-mono">LOAD SESSION</div>
+                      <div className="text-[8px] sm:text-[9px] text-gray-500 group-hover:text-accent font-bold mb-1 uppercase">DATA IMPORT</div>
+                      <div className="text-[10px] sm:text-xs text-white font-mono">LOAD SESSION</div>
                   </button>
 
                   <input type="file" ref={audioInputRef} onChange={handleAudioFile} accept="audio/*" multiple className="hidden" />
                   <button 
                      onClick={() => audioInputRef.current?.click()}
-                     className={`bg-gray-900 border ${loadedTrackId ? 'border-accent/50' : 'border-gray-700'} hover:border-accent p-3 text-left group transition-all`}
+                     className={`bg-gray-900 border ${loadedTrackId ? 'border-accent/50' : 'border-gray-700'} hover:border-accent p-2 sm:p-3 text-left group transition-all`}
                   >
-                      <div className="text-[9px] text-gray-500 group-hover:text-accent font-bold mb-1">AUDIO IMPORT</div>
-                      <div className="text-xs text-white font-mono">{library.length > 0 ? `${library.length} TRACKS IN QUEUE` : 'LOAD MP3/WAV'}</div>
+                      <div className="text-[8px] sm:text-[9px] text-gray-500 group-hover:text-accent font-bold mb-1 uppercase">AUDIO IMPORT</div>
+                      <div className="text-[10px] sm:text-xs text-white font-mono">{library.length > 0 ? `${library.length} TRACKS` : 'LOAD MP3/WAV'}</div>
                   </button>
               </div>
 
@@ -277,13 +277,13 @@ const PrismControls: React.FC<PrismControlsProps> = ({ onSessionImport }) => {
                         </button>
                      </div>
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <Knob label="SPEED" value={sampleParams.rate} min={10} max={200} onChange={(v) => updateSampleParam('rate', v)} size="sm" color="text-yellow-400" />
                     <Knob label="PITCH" value={sampleParams.detune} min={-1200} max={1200} step={50} onChange={(v) => updateSampleParam('detune', v)} size="sm" color="text-purple-400" />
                     <Knob label="VOL" value={sampleParams.volume} min={0} max={100} onChange={(v) => updateSampleParam('volume', v)} size="sm" color="text-white" />
                     
                     {/* Stems control */}
-                    <div className="flex flex-col items-center justify-end pb-0 relative h-20 bg-gray-900/40 rounded border border-gray-800 p-1">
+                    <div className="flex flex-col items-center justify-end pb-0 relative h-20 bg-gray-900/40 rounded border border-gray-800 p-1 col-span-1">
                          <div className="flex gap-1 w-full h-full items-end justify-between px-1">
                              {/* STEM COLUMNS with MUTE TOGGLES */}
                              {[

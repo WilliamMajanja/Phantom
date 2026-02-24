@@ -89,7 +89,9 @@ export class ShadowCore {
   public async initialize() {
     if (this.audioContext) return;
 
-    this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+        latencyHint: 'playback'
+    });
     
     // 1. Create Nodes
     this.masterGain = this.audioContext.createGain();
@@ -97,6 +99,7 @@ export class ShadowCore {
 
     this.masterLimiter = this.audioContext.createDynamicsCompressor();
     this.masterLimiter.threshold.value = -1.0;
+    this.masterLimiter.knee.value = 10; // Smoother transition
     this.masterLimiter.ratio.value = 20;
     this.masterLimiter.attack.value = 0.001;
     this.masterLimiter.release.value = 0.1;
@@ -759,7 +762,9 @@ export class ShadowCore {
 
     this.currentStep = effectiveStep;
     this.scheduleSound(this.currentStep, this.audioContext.currentTime);
-    if (this.onStepCallback) this.onStepCallback(this.currentStep);
+    if (this.onStepCallback) {
+        requestAnimationFrame(() => this.onStepCallback!(this.currentStep));
+    }
   }
 
   private scheduleSound(step: number, time: number) {
@@ -797,7 +802,7 @@ export class ShadowCore {
     }
     
     if (!this.audioContext || !this.masterGain) return;
-    const playTime = Math.max(this.audioContext.currentTime, time + 0.005);
+    const playTime = Math.max(this.audioContext.currentTime, time + 0.05); // Increased lookahead to 50ms for stability
     const panner = this.audioContext.createStereoPanner();
     panner.pan.value = track.pan || 0;
     const volume = this.audioContext.createGain();

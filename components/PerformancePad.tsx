@@ -71,22 +71,22 @@ const PerformancePad: React.FC = () => {
     }, [draggingXY]);
 
     return (
-        <div className="glass-panel p-6 bg-gray-900/50 flex flex-col gap-6 border-accent/20">
+        <div className="glass-panel p-4 sm:p-6 bg-gray-900/50 flex flex-col gap-4 sm:gap-6 border-accent/20 w-full">
             
             <div className="flex justify-between items-center w-full">
                 <div className="flex flex-col gap-1">
-                    <span className="text-xs font-bold text-accent tracking-widest uppercase">PERFORMANCE_CORE</span>
-                    <span className="text-[10px] text-gray-500 font-mono">REALTIME_FX_CHAIN</span>
+                    <span className="text-[10px] sm:text-xs font-bold text-accent tracking-widest uppercase">PERFORMANCE_CORE</span>
+                    <span className="text-[8px] sm:text-[10px] text-gray-500 font-mono">REALTIME_FX_CHAIN</span>
                 </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8 items-center justify-center">
+            <div className="flex flex-col xl:flex-row gap-6 sm:gap-8 items-center justify-center">
                 
                 {/* VECTOR CONTROL (XY PAD) */}
                 <div 
                     ref={xyRef}
                     onMouseDown={handleXYDown}
-                    className="w-48 h-48 bg-black border border-gray-700 relative cursor-crosshair overflow-hidden shadow-neo-inner group"
+                    className="w-40 h-40 sm:w-48 sm:h-48 bg-black border border-gray-700 relative cursor-crosshair overflow-hidden shadow-neo-inner group shrink-0"
                 >
                     {/* Grid Lines */}
                     <div className="absolute inset-0 opacity-20 pointer-events-none" 

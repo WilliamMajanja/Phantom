@@ -116,12 +116,21 @@ const GhostBridge: React.FC<GhostBridgeProps> = ({ currentState, onUpdate, isPro
                     <div className={`w-2 h-2 rounded-full ${isBusy ? 'bg-yellow-500 animate-pulse' : 'bg-accent'}`}></div>
                     <span className="text-xs font-bold text-gray-200 tracking-[0.2em]">GHOST_BRIDGE</span>
                 </div>
-                <button 
-                    onClick={() => setIsOpen(false)} 
-                    className="text-gray-500 hover:text-white transition-colors text-lg"
-                >
-                    ✕
-                </button>
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={() => setHistory([{ id: 'init', role: 'SYSTEM', text: 'GHOST_BRIDGE_V2 ONLINE. LINK ESTABLISHED.', timestamp: Date.now() }])}
+                        className="text-[8px] font-bold text-gray-600 hover:text-red-500 transition-colors uppercase tracking-widest"
+                        title="Clear History"
+                    >
+                        CLR_LOG
+                    </button>
+                    <button 
+                        onClick={() => setIsOpen(false)} 
+                        className="text-gray-500 hover:text-white transition-colors text-lg"
+                    >
+                        ✕
+                    </button>
+                </div>
             </div>
 
             {/* CHAT LOG */}

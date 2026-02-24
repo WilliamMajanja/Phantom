@@ -9,12 +9,16 @@ interface SequencerGridProps {
   onSelectTrack: (trackIndex: number) => void;
   selectedTrackIndex: number | null;
   onUpdateStep?: (trackIndex: number, stepIndex: number, key: 'velocity' | 'probability', val: number) => void;
+  onClearTrack?: (trackIndex: number) => void;
+  onRandomizeTrack?: (trackIndex: number) => void;
+  onRandomizeAll?: () => void;
 }
 
 type EditMode = 'TRIG' | 'VEL' | 'PROB';
 
 const SequencerGrid: React.FC<SequencerGridProps> = ({ 
-  tracks, currentStep, onToggleStep, onSelectTrack, selectedTrackIndex, onUpdateStep
+  tracks, currentStep, onToggleStep, onSelectTrack, selectedTrackIndex, onUpdateStep,
+  onClearTrack, onRandomizeTrack, onRandomizeAll
 }) => {
   const [editMode, setEditMode] = useState<EditMode>('TRIG');
 
@@ -69,6 +73,17 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
                   </button>
               ))}
           </div>
+
+          {/* Global Actions */}
+          <div className="flex gap-1 ml-4">
+              <button 
+                onClick={onRandomizeAll}
+                className="text-[9px] font-bold px-3 py-1 bg-gray-900 border border-gray-800 text-gray-500 hover:text-accent hover:border-accent transition-all font-mono uppercase"
+                title="Randomize All Tracks"
+              >
+                  RAND_ALL
+              </button>
+          </div>
       </div>
 
       {tracks.map((track, trackIndex) => (
@@ -88,6 +103,24 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
                 <span className="text-[8px] text-gray-500 font-mono uppercase">{track.type.split('_')[0]}</span>
                 {track.mute && <span className="text-[8px] text-red-500 font-bold bg-red-900/20 px-1 rounded">M</span>}
                 {track.solo && <span className="text-[8px] text-yellow-500 font-bold bg-yellow-900/20 px-1 rounded">S</span>}
+            </div>
+            
+            {/* Track Actions */}
+            <div className="flex gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onClearTrack?.(trackIndex); }}
+                    className="text-[7px] font-bold text-gray-500 hover:text-red-500 uppercase tracking-tighter"
+                    title="Clear Track"
+                >
+                    CLR
+                </button>
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onRandomizeTrack?.(trackIndex); }}
+                    className="text-[7px] font-bold text-gray-500 hover:text-accent uppercase tracking-tighter"
+                    title="Randomize Track"
+                >
+                    RND
+                </button>
             </div>
           </div>
 

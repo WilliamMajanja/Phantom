@@ -11,18 +11,18 @@ interface MixerConsoleProps {
 const MixerConsole: React.FC<MixerConsoleProps> = ({ tracks, onUpdateTrack }) => {
     
     return (
-        <div className="glass-panel p-6 w-full flex flex-col gap-4 overflow-x-auto custom-scrollbar">
+        <div className="glass-panel p-3 sm:p-6 w-full flex flex-col gap-4 overflow-x-auto custom-scrollbar">
             <div className="flex justify-between items-center border-b border-gray-800 pb-2 mb-2 sticky left-0">
-                <span className="text-[10px] text-accent font-bold tracking-widest uppercase">PRODUCTION_CONSOLE // MIXER</span>
+                <span className="text-[9px] sm:text-[10px] text-accent font-bold tracking-widest uppercase">PRODUCTION_CONSOLE // MIXER</span>
                 <div className="flex gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#00ff00]"></div>
-                    <span className="text-[9px] font-mono text-gray-500">AUDIO ENGINE ACTIVE</span>
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#00ff00]"></div>
+                    <span className="text-[8px] sm:text-[9px] font-mono text-gray-500">AUDIO ENGINE ACTIVE</span>
                 </div>
             </div>
 
-            <div className="flex gap-2 min-w-max pb-4">
+            <div className="flex gap-1 sm:gap-2 min-w-max pb-4">
                 {tracks.map((track, index) => (
-                    <div key={track.id} className="w-20 bg-black/40 border border-gray-800 rounded flex flex-col items-center p-2 relative group hover:border-gray-600 transition-colors">
+                    <div key={track.id} className="w-16 sm:w-20 bg-black/40 border border-gray-800 rounded flex flex-col items-center p-1 sm:p-2 relative group hover:border-gray-600 transition-colors">
                         
                         {/* Name */}
                         <div className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter truncate w-full text-center mb-2" title={track.name}>

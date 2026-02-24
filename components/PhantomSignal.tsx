@@ -75,30 +75,32 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
   };
 
   return (
-    <div className="glass-panel p-6 flex flex-col items-center gap-6 bg-black relative">
+    <div className="glass-panel p-4 sm:p-6 flex flex-col items-center gap-4 sm:gap-6 bg-black relative w-full">
       <div className="w-full flex justify-between items-center border-b border-gray-800 pb-2">
-         <span className="text-[10px] text-accent font-bold tracking-widest uppercase">PHANTOM SIGNAL</span>
-         <span className={`text-[9px] font-mono uppercase ${midiReady ? 'text-accent' : 'text-gray-600'}`}>
+         <span className="text-[9px] sm:text-[10px] text-accent font-bold tracking-widest uppercase">PHANTOM SIGNAL</span>
+         <span className={`text-[8px] sm:text-[9px] font-mono uppercase ${midiReady ? 'text-accent' : 'text-gray-600'}`}>
             {midiReady ? 'LINK_ESTABLISHED' : 'NO_CARRIER'}
          </span>
       </div>
 
-      <div className="flex gap-4 items-center justify-center">
-          <Knob 
-            label="TX_FILTER" 
-            value={filterValue} 
-            min={0} max={100} 
-            onChange={handleFilterChange}
-            size="md"
-            color="text-accent"
-          />
+      <div className="flex flex-wrap gap-4 items-center justify-center w-full">
+          <div className="order-2 sm:order-1">
+            <Knob 
+                label="TX_FILTER" 
+                value={filterValue} 
+                min={0} max={100} 
+                onChange={handleFilterChange}
+                size="sm"
+                color="text-accent"
+            />
+          </div>
 
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2 order-1 sm:order-2 w-full sm:w-auto">
               <button 
                 onClick={toggleBroadcast}
                 disabled={killSwitch}
                 className={`
-                    w-20 h-20 rounded-full flex items-center justify-center border-2
+                    w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center border-2
                     transition-all duration-100 relative
                     ${isOnAir 
                         ? 'bg-accent/10 border-accent text-accent shadow-[0_0_15px_#00ff41]' 
@@ -106,22 +108,24 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
                     ${killSwitch ? 'opacity-20 cursor-not-allowed' : ''}
                 `}
               >
-                 <span className="font-mono text-2xl">☢</span>
+                 <span className="font-mono text-xl sm:text-2xl">☢</span>
               </button>
-              <span className={`text-[10px] font-bold tracking-widest ${isOnAir ? 'text-accent animate-pulse' : 'text-gray-600'}`}>
+              <span className={`text-[9px] sm:text-[10px] font-bold tracking-widest ${isOnAir ? 'text-accent animate-pulse' : 'text-gray-600'}`}>
                 {isOnAir ? 'BROADCASTING' : 'SILENT'}
               </span>
           </div>
 
-          <Knob 
-            label="FREQ" 
-            value={frequency} 
-            min={87.5} max={108.0} 
-            step={0.1}
-            onChange={handleFrequencyChange}
-            size="md"
-            color="text-accent"
-          />
+          <div className="order-3">
+            <Knob 
+                label="FREQ" 
+                value={frequency} 
+                min={87.5} max={108.0} 
+                step={0.1}
+                onChange={handleFrequencyChange}
+                size="sm"
+                color="text-accent"
+            />
+          </div>
       </div>
 
        <div className="w-full bg-gray-900/50 border border-gray-800 p-2 rounded text-center flex justify-between items-center px-4">
