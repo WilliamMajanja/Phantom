@@ -449,7 +449,7 @@ const App: React.FC = () => {
            <div className="hidden md:flex gap-6 border-l border-gray-800 pl-6">
               <div className="flex flex-col">
                   <span className="text-[8px] text-gray-600 font-bold uppercase tracking-wide">Kernel</span>
-                  <span className="text-[10px] text-gray-300">REFLEX_OS</span>
+                  <span className="text-[10px] text-gray-300">PiNet_Os Kernel</span>
               </div>
               <div className="flex flex-col">
                   <span className="text-[8px] text-gray-600 font-bold uppercase tracking-wide">DSP Clock</span>
@@ -722,7 +722,7 @@ const App: React.FC = () => {
                             <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-purple-400">GHOST_BRIDGE</span>: GEMINI-1.5-FLASH READY</p>
                             <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-blue-400">AUDIO_ENGINE</span>: 48kHz 32-BIT FLOAT</p>
                             <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-yellow-500">HIVE_MESH</span>: LISTENING ON 915MHz</p>
-                            <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-white">KERNEL</span>: REFLEX_OS v1.2 OK</p>
+                            <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-white">KERNEL</span>: PiNet_Os Kernel v1.2 OK</p>
                             <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-red-400">NPU</span>: HAILO-8L ONLINE</p>
                         </div>
                     </div>

@@ -14,7 +14,7 @@ interface TrackInspectorProps {
 const TrackInspector: React.FC<TrackInspectorProps> = ({ track, onChange, onDelete }) => {
   
   const updateParam = (key: keyof typeof track.params, value: number) => {
-    // 1. Update Internal State (App/Reflex Engine)
+    // 1. Update Internal State (App/PiNet_Os Engine)
     onChange({
       ...track,
       params: {

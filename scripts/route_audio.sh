@@ -1,5 +1,5 @@
 #!/bin/bash
-# LyraFlex Audio Routing Script (Reflex OS)
+# LyraFlex Audio Routing Script (PiNet_Os Kernel)
 # Requires: pipewire, wireplumber
 
 echo "🎛️  Initializing LyraFlex Virtual Cable..."

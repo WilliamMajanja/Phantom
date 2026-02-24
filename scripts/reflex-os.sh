@@ -2,7 +2,7 @@
 #!/bin/bash
 
 # ==========================================
-# REFLEX OS ORCHESTRATOR
+# PiNet_Os Kernel ORCHESTRATOR
 # ==========================================
 # This script runs on boot via phantom.service.
 # It initializes the hardware, AI backend, and UI Kiosk.

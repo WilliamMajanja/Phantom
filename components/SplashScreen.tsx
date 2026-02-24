@@ -158,7 +158,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
 
       {/* Version Stamp */}
       <div className="absolute bottom-6 right-6 text-[9px] text-gray-800 font-mono">
-          BUILD: 9482.A // REFLEX_OS
+          BUILD: 9482.A // PiNet_Os Kernel
       </div>
 
     </div>
