@@ -425,9 +425,30 @@ const PrismControls: React.FC<PrismControlsProps> = ({ onSessionImport }) => {
                   </div>
               </div>
 
-              {/* MASTER OUTPUT */}
-              <div className="pt-4 border-t border-white/10">
-                  <div className="flex justify-between items-center mb-3">
+              {/* MASTER OUTPUT & BROADCAST */}
+              <div className="pt-4 border-t border-white/10 space-y-4">
+                  <div className="flex justify-between items-center">
+                     <span className="text-[10px] font-bold text-accent tracking-widest uppercase">Broadcast // FM_RDS</span>
+                     <div className="flex items-center gap-2">
+                         <div className="flex bg-black border border-gray-800 rounded p-0.5">
+                            <input 
+                                type="text" 
+                                defaultValue="87.5" 
+                                className="bg-transparent text-[9px] text-accent w-10 text-center focus:outline-none"
+                                placeholder="MHz"
+                            />
+                            <span className="text-[8px] text-gray-600 self-center pr-1">MHz</span>
+                         </div>
+                         <button 
+                            className="px-2 py-1 text-[9px] font-bold border border-gray-700 text-gray-500 rounded hover:border-accent hover:text-accent transition-all"
+                            onClick={() => alert("FM BROADCAST INITIATED ON GPIO 4")}
+                         >
+                             TX_START
+                         </button>
+                     </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
                      <span className="text-[10px] font-bold text-accent tracking-widest">MASTER_BUS // OUT</span>
                      <select 
                         value={selectedOutputId}

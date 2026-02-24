@@ -1,0 +1,25 @@
+
+version: '3.8'
+
+services:
+  phantom:
+    build: .
+    container_name: phantom_daw
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /dev/gpiomem:/dev/gpiomem
+      - /dev/mem:/dev/mem
+      - /dev/snd:/dev/snd
+    privileged: true
+    restart: always
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    devices:
+      - "/dev/gpiomem:/dev/gpiomem"
+      - "/dev/snd:/dev/snd"
+    cap_add:
+      - SYS_RAWIO
+      - SYS_ADMIN

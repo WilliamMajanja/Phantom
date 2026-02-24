@@ -22,6 +22,9 @@ python3 $PHANTOM_HOME/scripts/kill_switch.py &
 # Start the Hive Mesh (LoRa) in Listener Mode
 python3 $PHANTOM_HOME/scripts/hive_mesh.py &
 
+# Start the FM Broadcaster (GPIO 4)
+python3 $PHANTOM_HOME/scripts/fm_broadcast.py &
+
 # 2. START AI BACKEND (THE GHOST)
 # Start the Ollama & NPU Bridge
 python3 $PHANTOM_HOME/scripts/ollama_npu_bridge.py &

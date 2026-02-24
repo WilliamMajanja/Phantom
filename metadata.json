@@ -1,6 +1,6 @@
 {
   "name": "PHANTOM | AI-Native Tactical Audio Workstation",
-  "description": "A decentralized, AI-augmented drum machine and synthesizer running on the Shadow Core audio engine. Features real-time neural pattern generation, blockchain provenance, and mesh network synchronization.",
+  "description": "A decentralized, AI-augmented drum machine and synthesizer running on the PiNet_Os Kernel. Features real-time neural pattern generation, FM RDS broadcasting (GPIO 4), Hailo-8L NPU AI acceleration, and Docker-ready deployment for Raspbian.",
   "requestFramePermissions": [
     "microphone"
   ]
