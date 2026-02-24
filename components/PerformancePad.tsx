@@ -9,6 +9,8 @@ const PerformancePad: React.FC = () => {
     const [delayVal, setDelayVal] = useState(0);
     const [reverbVal, setReverbVal] = useState(0);
     const [stutterMode, setStutterMode] = useState<number | null>(null);
+    const [isTapeStop, setIsTapeStop] = useState(false);
+    const [isDelayFreeze, setIsDelayFreeze] = useState(false);
     const [xy, setXY] = useState({ x: 0.5, y: 0 }); // Center X, Bottom Y
     const [draggingXY, setDraggingXY] = useState(false);
     const xyRef = useRef<HTMLDivElement>(null);
@@ -42,6 +44,18 @@ const PerformancePad: React.FC = () => {
             setStutterMode(interval);
             shadowCore.setStutter(true, interval);
         }
+    };
+
+    const toggleTapeStop = () => {
+        const newState = !isTapeStop;
+        setIsTapeStop(newState);
+        shadowCore.setTapeStop(newState);
+    };
+
+    const toggleDelayFreeze = () => {
+        const newState = !isDelayFreeze;
+        setIsDelayFreeze(newState);
+        shadowCore.setDelayFreeze(newState);
     };
 
     // XY Pad Logic
@@ -95,6 +109,20 @@ const PerformancePad: React.FC = () => {
                     <span className="text-[10px] sm:text-xs font-bold text-accent tracking-widest uppercase">PERFORMANCE_CORE</span>
                     <span className="text-[8px] sm:text-[10px] text-gray-500 font-mono">REALTIME_FX_CHAIN</span>
                 </div>
+                <div className="flex gap-2">
+                    <button 
+                        onClick={toggleTapeStop}
+                        className={`h-8 px-4 text-[9px] font-bold border transition-all rounded-sm ${isTapeStop ? 'bg-red-500 text-black border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-black border-gray-800 text-gray-500 hover:border-red-500/50'}`}
+                    >
+                        TAPE_STOP
+                    </button>
+                    <button 
+                        onClick={toggleDelayFreeze}
+                        className={`h-8 px-4 text-[9px] font-bold border transition-all rounded-sm ${isDelayFreeze ? 'bg-blue-500 text-black border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'bg-black border-gray-800 text-gray-500 hover:border-blue-500/50'}`}
+                    >
+                        DLY_FREEZE
+                    </button>
+                </div>
             </div>
 
             <div className="flex flex-col xl:flex-row gap-6 sm:gap-8 items-center justify-center">
@@ -104,20 +132,29 @@ const PerformancePad: React.FC = () => {
                     ref={xyRef}
                     onMouseDown={handleXYDown}
                     onTouchStart={handleXYTouchStart}
-                    className="w-40 h-40 sm:w-48 sm:h-48 bg-black border border-gray-700 relative cursor-crosshair overflow-hidden shadow-neo-inner group shrink-0 touch-none"
+                    className="w-40 h-40 sm:w-64 sm:h-64 bg-black border border-gray-700 relative cursor-crosshair overflow-hidden shadow-neo-inner group shrink-0 touch-none"
                 >
                     {/* Grid Lines */}
                     <div className="absolute inset-0 opacity-20 pointer-events-none" 
-                        style={{backgroundImage: 'linear-gradient(gray 1px, transparent 1px), linear-gradient(90deg, gray 1px, transparent 1px)', backgroundSize: '20px 20px'}}>
+                        style={{backgroundImage: 'linear-gradient(gray 1px, transparent 1px), linear-gradient(90deg, gray 1px, transparent 1px)', backgroundSize: '32px 32px'}}>
                     </div>
                     
                     {/* Axis Labels */}
                     <span className="absolute bottom-1 left-2 text-[8px] font-mono text-gray-500">FILTER FREQ</span>
                     <span className="absolute top-2 left-1 text-[8px] font-mono text-gray-500 rotate-90 origin-top-left">RES / CRUSH</span>
 
+                    {/* Dynamic Glow */}
+                    <div 
+                        className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+                        style={{ 
+                            background: `radial-gradient(circle at ${xy.x * 100}% ${100 - (xy.y * 100)}%, rgba(0, 255, 65, 0.15) 0%, transparent 50%)`,
+                            opacity: draggingXY ? 1 : 0.3
+                        }}
+                    ></div>
+
                     {/* Reticle */}
                     <div 
-                        className="absolute w-4 h-4 border-2 border-accent rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none shadow-[0_0_10px_#00ff41] transition-transform duration-75"
+                        className="absolute w-6 h-6 border-2 border-accent rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none shadow-[0_0_15px_#00ff41] transition-transform duration-75"
                         style={{ left: `${xy.x * 100}%`, bottom: `${xy.y * 100}%` }}
                     >
                         <div className="absolute top-1/2 left-1/2 w-0.5 h-full bg-accent/50 -translate-x-1/2 -translate-y-1/2"></div>
@@ -136,10 +173,10 @@ const PerformancePad: React.FC = () => {
                 {/* SCENE LAUNCH & STUTTER */}
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2">
-                        <span className="text-[9px] font-bold text-gray-600 tracking-widest">FLUX_ENGINE</span>
-                        <div className="flex gap-2">
-                            {[4, 2, 1].map((interval) => {
-                                const label = interval === 4 ? '1/4' : interval === 2 ? '1/8' : '1/16';
+                        <span className="text-[9px] font-bold text-gray-600 tracking-widest uppercase">FLUX_ENGINE // STUTTER</span>
+                        <div className="grid grid-cols-3 gap-2">
+                            {[8, 4, 2, 1, 0.5, 0.25].map((interval) => {
+                                const label = interval === 8 ? '1/2' : interval === 4 ? '1/4' : interval === 2 ? '1/8' : interval === 1 ? '1/16' : interval === 0.5 ? '1/32' : '1/64';
                                 const isActive = stutterMode === interval;
                                 return (
                                     <button
@@ -149,7 +186,7 @@ const PerformancePad: React.FC = () => {
                                         onTouchStart={(e) => { e.preventDefault(); toggleStutter(interval); }}
                                         onTouchEnd={(e) => { e.preventDefault(); if(isActive) toggleStutter(interval); }}
                                         className={`
-                                            w-10 h-10 rounded flex items-center justify-center font-bold text-xs font-mono border transition-all touch-none
+                                            w-12 h-10 rounded flex items-center justify-center font-bold text-[10px] font-mono border transition-all touch-none
                                             ${isActive 
                                                 ? 'bg-accent text-black border-accent shadow-[0_0_10px_#00ff41] scale-95' 
                                                 : 'bg-black border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'}
@@ -163,10 +200,10 @@ const PerformancePad: React.FC = () => {
                     </div>
                     
                     <div className="flex flex-col gap-2">
-                        <span className="text-[9px] font-bold text-gray-600 tracking-widest">SCENE_LAUNCH</span>
+                        <span className="text-[9px] font-bold text-gray-600 tracking-widest uppercase">SCENE_LAUNCH</span>
                         <div className="grid grid-cols-2 gap-2">
-                             <button className="h-8 bg-gray-800 border border-gray-700 text-[9px] text-gray-400 hover:bg-gray-700 hover:text-white">SCENE A</button>
-                             <button className="h-8 bg-gray-800 border border-gray-700 text-[9px] text-gray-400 hover:bg-gray-700 hover:text-white">SCENE B</button>
+                             <button className="h-10 bg-gray-900 border border-gray-700 text-[9px] font-bold text-gray-400 hover:bg-gray-800 hover:text-white hover:border-accent/50 transition-all rounded-sm">SCENE A</button>
+                             <button className="h-10 bg-gray-900 border border-gray-700 text-[9px] font-bold text-gray-400 hover:bg-gray-800 hover:text-white hover:border-accent/50 transition-all rounded-sm">SCENE B</button>
                         </div>
                     </div>
                 </div>

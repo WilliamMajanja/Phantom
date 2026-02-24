@@ -73,6 +73,7 @@ export class ShadowCore {
   private prismActive: boolean = false;
   private prismStartTime: number = 0;
   private prismOffset: number = 0;
+  private isTapeStopping: boolean = false;
 
   // Mic / Input
   private duckingAmount: number = 0; 
@@ -525,6 +526,30 @@ export class ShadowCore {
   public setDelaySend(amount: number) {
       if (this.delaySendGain && this.audioContext) {
           this.delaySendGain.gain.setTargetAtTime(amount, this.audioContext.currentTime, 0.1);
+      }
+  }
+
+  public setDelayFreeze(active: boolean) {
+      if (!this.delayFeedback || !this.audioContext) return;
+      const t = this.audioContext.currentTime;
+      if (active) {
+          this.delayFeedback.gain.setTargetAtTime(1.0, t, 0.05);
+      } else {
+          this.delayFeedback.gain.setTargetAtTime(0.4, t, 0.1);
+      }
+  }
+
+  public setTapeStop(active: boolean) {
+      if (!this.prismSource || !this.audioContext) return;
+      const t = this.audioContext.currentTime;
+      this.isTapeStopping = active;
+      
+      if (active) {
+          this.prismSource.playbackRate.cancelScheduledValues(t);
+          this.prismSource.playbackRate.exponentialRampToValueAtTime(0.001, t + 1.5);
+      } else {
+          this.prismSource.playbackRate.cancelScheduledValues(t);
+          this.prismSource.playbackRate.exponentialRampToValueAtTime(this.prismPlaybackRate, t + 0.2);
       }
   }
 

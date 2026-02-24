@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Knob from './Knob';
 import { shadowCore } from '../services/audio/ShadowCore';
+import { radioService } from '../services/radioService';
 
 interface PrismControlsProps {
     onSessionImport?: (json: any) => void;
@@ -427,25 +428,40 @@ const PrismControls: React.FC<PrismControlsProps> = ({ onSessionImport }) => {
 
               {/* MASTER OUTPUT & BROADCAST */}
               <div className="pt-4 border-t border-white/10 space-y-4">
-                  <div className="flex justify-between items-center">
-                     <span className="text-[10px] font-bold text-accent tracking-widest uppercase">Broadcast // FM_RDS</span>
-                     <div className="flex items-center gap-2">
-                         <div className="flex bg-black border border-gray-800 rounded p-0.5">
-                            <input 
-                                type="text" 
-                                defaultValue="87.5" 
-                                className="bg-transparent text-[9px] text-accent w-10 text-center focus:outline-none"
-                                placeholder="MHz"
-                            />
-                            <span className="text-[8px] text-gray-600 self-center pr-1">MHz</span>
+                  <div className="bg-accent/5 border border-accent/20 rounded p-3">
+                      <div className="flex justify-between items-center mb-2">
+                         <div className="flex items-center gap-2">
+                             <div className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse"></div>
+                             <span className="text-[10px] font-black text-accent tracking-[0.2em] uppercase">Pirate_Radio // FM_RDS</span>
                          </div>
-                         <button 
-                            className="px-2 py-1 text-[9px] font-bold border border-gray-700 text-gray-500 rounded hover:border-accent hover:text-accent transition-all"
-                            onClick={() => alert("FM BROADCAST INITIATED ON GPIO 4")}
-                         >
-                             TX_START
-                         </button>
-                     </div>
+                         <span className="text-[8px] font-mono text-gray-500">GPIO_04 // ACTIVE</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                          <div className="flex-1 bg-black border border-gray-800 rounded flex items-center px-3 py-1.5">
+                              <span className="text-[10px] font-mono text-gray-600 mr-2">FREQ:</span>
+                              <input 
+                                  type="number" 
+                                  step="0.1"
+                                  defaultValue="101.1" 
+                                  className="bg-transparent text-sm font-mono text-accent w-full focus:outline-none tabular-nums"
+                                  onChange={(e) => {
+                                      const val = parseFloat(e.target.value);
+                                      if (!isNaN(val)) radioService.joinFrequency(val.toFixed(1));
+                                  }}
+                              />
+                              <span className="text-[10px] font-mono text-gray-600 ml-2">MHz</span>
+                          </div>
+                          <button 
+                             className="px-4 py-2 bg-accent text-black text-[10px] font-black rounded-sm hover:bg-accent/80 transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(0,255,65,0.2)]"
+                             onClick={() => {
+                                 // Simulation of starting the Python script via radioService or similar
+                                 console.log("FM Broadcast Started");
+                             }}
+                          >
+                              TX_START
+                          </button>
+                      </div>
                   </div>
 
                   <div className="flex justify-between items-center">
@@ -453,24 +469,25 @@ const PrismControls: React.FC<PrismControlsProps> = ({ onSessionImport }) => {
                      <select 
                         value={selectedOutputId}
                         onChange={(e) => handleOutputChange(e.target.value)}
-                        className="bg-black text-[9px] text-accent border border-gray-700 rounded px-2 py-1 max-w-[140px]"
+                        className="bg-black text-[9px] text-accent border border-gray-700 rounded px-2 py-1 max-w-[140px] focus:border-accent outline-none"
                      >
                          <option value="">Default Output</option>
                          {outputDevices.map(d => <option key={d.deviceId} value={d.deviceId}>{d.label || `Out ${d.deviceId.slice(0,4)}`}</option>)}
                      </select>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center justify-between gap-4 bg-gray-900/40 p-3 rounded border border-gray-800">
                       <div className="flex flex-col gap-1 items-start">
                           <div className="flex items-center gap-2">
                               <div className="w-2 h-2 bg-accent rounded-full animate-pulse shadow-[0_0_5px_#00ff41]"></div>
                               <span className="text-[9px] text-gray-400 font-mono">LIMITER_ENGAGED</span>
                           </div>
+                          <div className="text-[7px] text-gray-600 font-mono">THR: -0.1dB // REL: 50ms</div>
                       </div>
                       
                       <div className="flex items-center gap-4">
-                          <div className="h-10 w-1 bg-gray-800 rounded-full overflow-hidden flex flex-col justify-end">
-                              <div className="w-full bg-accent h-[70%]" style={{ height: `${masterVolume}%` }}></div>
+                          <div className="h-12 w-1.5 bg-gray-800 rounded-full overflow-hidden flex flex-col justify-end shadow-inner">
+                              <div className="w-full bg-accent transition-all duration-100" style={{ height: `${masterVolume}%`, filter: 'brightness(1.2)' }}></div>
                           </div>
                           <Knob 
                             label="MASTER VOL" 

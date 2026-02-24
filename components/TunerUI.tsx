@@ -19,66 +19,105 @@ const TunerUI: React.FC<TunerUIProps> = ({
   const isWeak = loraStrength < 30;
   const isDead = loraStrength === 0;
 
-  const Bar = ({ level, color }: { level: number, color: string }) => (
-      <div className="w-full h-1 bg-gray-800 mt-1">
-          <div className={`h-full ${color}`} style={{ width: `${Math.min(100, Math.max(0, level * 100))}%` }}></div>
+  // Calculate SVG circle properties
+  const size = 280;
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (loraStrength / 100) * circumference;
+
+  const Bar = ({ level, color, label }: { level: number, color: string, label: string }) => (
+      <div className="flex flex-col gap-0.5">
+          <div className="flex justify-between items-center text-[8px] font-mono">
+              <span className="text-gray-500">{label}</span>
+              <span className="text-accent">{(level * 100).toFixed(0)}%</span>
+          </div>
+          <div className="w-full h-1 bg-gray-800/50 rounded-full overflow-hidden">
+              <div className={`h-full ${color} transition-all duration-500 ease-out`} style={{ width: `${Math.min(100, Math.max(0, level * 100))}%` }}></div>
+          </div>
       </div>
   );
 
   return (
-    <div className="w-56 h-56 sm:w-64 sm:h-64 lg:w-[300px] lg:h-[300px] bg-[#0a0a0a] border border-[#333] rounded-full flex flex-col items-center justify-center relative p-3 sm:p-4 lg:p-8 shadow-neo-inner overflow-hidden shrink-0">
+    <div className="w-64 h-64 sm:w-72 sm:h-72 lg:w-[320px] lg:h-[320px] bg-[#050505] border border-gray-800 rounded-full flex flex-col items-center justify-center relative shadow-[inset_0_0_30px_rgba(0,0,0,0.8)] overflow-hidden shrink-0 group">
         
+        {/* SVG Circular Meter */}
+        <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none z-10" viewBox={`0 0 ${size} ${size}`}>
+            {/* Background Circle */}
+            <circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="transparent"
+                stroke="rgba(31, 41, 55, 0.3)"
+                strokeWidth={strokeWidth}
+            />
+            {/* Progress Circle */}
+            <circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="transparent"
+                stroke={isDead ? '#ef4444' : isWeak ? '#eab308' : '#00ff41'}
+                strokeWidth={strokeWidth}
+                strokeDasharray={circumference}
+                strokeDashoffset={offset}
+                strokeLinecap="round"
+                className="transition-all duration-1000 ease-in-out"
+                style={{ filter: `drop-shadow(0 0 5px ${isDead ? '#ef4444' : isWeak ? '#eab308' : '#00ff41'})` }}
+            />
+            
+            {/* Ticks */}
+            {[...Array(12)].map((_, i) => (
+                <line
+                    key={i}
+                    x1={size / 2}
+                    y1={size / 2 - radius + 15}
+                    x2={size / 2}
+                    y2={size / 2 - radius + 5}
+                    stroke="rgba(156, 163, 175, 0.2)"
+                    strokeWidth="1"
+                    transform={`rotate(${i * 30}, ${size / 2}, ${size / 2})`}
+                />
+            ))}
+        </svg>
+
         {/* Signal Status Header */}
-        <div className="text-center mb-1 sm:mb-2 lg:mb-4 z-10">
-            <div className="text-[7px] sm:text-[8px] lg:text-[10px] text-gray-500 font-bold tracking-[0.2em] mb-0.5 sm:mb-1 uppercase">SIGNAL INTEGRITY</div>
-            <div className={`text-base sm:text-xl lg:text-2xl font-mono font-bold ${isDead ? 'text-red-600' : isWeak ? 'text-yellow-500' : 'text-accent'}`}>
-                {loraStrength.toFixed(0)}<span className="text-[10px] sm:text-xs lg:text-sm text-gray-600">%</span>
+        <div className="text-center mb-4 z-20">
+            <div className="text-[8px] lg:text-[10px] text-gray-500 font-bold tracking-[0.3em] mb-1 uppercase opacity-60">SIGNAL_INTEGRITY</div>
+            <div className={`text-3xl lg:text-4xl font-mono font-black tracking-tighter ${isDead ? 'text-red-600' : isWeak ? 'text-yellow-500' : 'text-accent'}`}>
+                {loraStrength.toFixed(0)}<span className="text-xs lg:text-sm text-gray-600 ml-1">%</span>
             </div>
-            <div className="text-[7px] sm:text-[8px] lg:text-[9px] text-gray-600 font-mono mt-0.5 sm:mt-1">
-                {isDead ? 'NO LINK' : isWeak ? 'WEAK SIGNAL' : 'HIVE SYNCED'}
+            <div className="flex items-center justify-center gap-2 mt-1">
+                <div className={`w-1.5 h-1.5 rounded-full ${isDead ? 'bg-red-600' : isWeak ? 'bg-yellow-500 animate-pulse' : 'bg-accent animate-pulse'}`}></div>
+                <div className="text-[8px] lg:text-[10px] text-gray-400 font-mono tracking-widest uppercase">
+                    {isDead ? 'NO_LINK' : isWeak ? 'WEAK_SIGNAL' : 'HIVE_SYNCED'}
+                </div>
             </div>
         </div>
 
         {/* Tactical Grid Visualization */}
-        <div className="grid grid-cols-2 gap-x-3 sm:gap-x-4 lg:gap-x-8 gap-y-1 sm:gap-y-2 lg:gap-y-4 w-full z-10 px-2 sm:px-4">
-            
-            <div className="text-right">
-                <div className="text-[7px] sm:text-[8px] lg:text-[9px] text-gray-400 font-bold mb-0.5">VOX</div>
-                <div className="text-[7px] sm:text-[8px] lg:text-[9px] font-mono text-accent">{(stemLevels.vox * 100).toFixed(0)}</div>
-                <Bar level={stemLevels.vox} color="bg-yellow-400" />
-            </div>
-
-            <div className="text-left">
-                <div className="text-[7px] sm:text-[8px] lg:text-[9px] text-gray-400 font-bold mb-0.5">DRUM</div>
-                <div className="text-[7px] sm:text-[8px] lg:text-[9px] font-mono text-accent">{(stemLevels.drum * 100).toFixed(0)}</div>
-                <Bar level={stemLevels.drum} color="bg-red-500" />
-            </div>
-
-            <div className="text-right">
-                <div className="text-[7px] sm:text-[8px] lg:text-[9px] text-gray-400 font-bold mb-0.5">BASS</div>
-                <div className="text-[7px] sm:text-[8px] lg:text-[9px] font-mono text-accent">{(stemLevels.bass * 100).toFixed(0)}</div>
-                <Bar level={stemLevels.bass} color="bg-blue-500" />
-            </div>
-
-            <div className="text-left">
-                <div className="text-[7px] sm:text-[8px] lg:text-[9px] text-gray-400 font-bold mb-0.5">SYNT</div>
-                <div className="text-[7px] sm:text-[8px] lg:text-[9px] font-mono text-accent">{(stemLevels.other * 100).toFixed(0)}</div>
-                <Bar level={stemLevels.other} color="bg-purple-500" />
-            </div>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-3 w-full z-20 px-8 lg:px-12">
+            <Bar level={stemLevels.vox} color="bg-yellow-400" label="VOX" />
+            <Bar level={stemLevels.drum} color="bg-red-500" label="DRM" />
+            <Bar level={stemLevels.bass} color="bg-blue-500" label="BSS" />
+            <Bar level={stemLevels.other} color="bg-purple-500" label="SYN" />
         </div>
 
-        {/* Background Grid Lines (CSS Only, Lightweight) */}
-        <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" 
+        {/* Background Grid Lines */}
+        <div className="absolute inset-0 z-0 opacity-5 pointer-events-none" 
              style={{ 
                  backgroundImage: 'linear-gradient(#00ff41 1px, transparent 1px), linear-gradient(90deg, #00ff41 1px, transparent 1px)', 
-                 backgroundSize: '20px 20px',
+                 backgroundSize: '32px 32px',
                  backgroundPosition: 'center'
              }}>
         </div>
         
         {/* Animated Scanline */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/5 to-transparent h-full w-full animate-scan pointer-events-none z-0"></div>
-
+        
+        {/* Radial Overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.4)_100%)] pointer-events-none z-10"></div>
     </div>
   );
 };

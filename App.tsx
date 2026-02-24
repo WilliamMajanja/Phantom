@@ -29,6 +29,7 @@ import { radioService } from './services/radioService';
 enum Tab {
   CORE = 'SEQUENCER',
   PERFORM = 'PERFORMANCE',
+  RADIO = 'PIRATE RADIO',
   PATCHBAY = 'PATCHBAY',
   NETWORK = 'NETWORK'
 }
@@ -513,6 +514,7 @@ const App: React.FC = () => {
               <div className="flex-1 flex gap-0.5 sm:gap-1 px-1 sm:px-4 items-end overflow-x-auto no-scrollbar">
                   <TabButton label="SEQUENCER" tab={Tab.CORE} />
                   <TabButton label="PERFORM" tab={Tab.PERFORM} />
+                  <TabButton label="RADIO" tab={Tab.RADIO} />
                   <TabButton label="PATCHBAY" tab={Tab.PATCHBAY} />
                   <TabButton label="NETWORK" tab={Tab.NETWORK} />
               </div>
@@ -670,6 +672,15 @@ const App: React.FC = () => {
         {/* --- TAB: PERFORMANCE --- */}
         {activeTab === Tab.PERFORM && (
             <div className="h-full flex flex-col items-center justify-start sm:justify-center p-4 sm:p-8 gap-6 sm:gap-8 animate-fade-in max-w-6xl mx-auto overflow-y-auto custom-scrollbar">
+                <div className="w-full pb-8">
+                    <PerformancePad />
+                </div>
+            </div>
+        )}
+
+        {/* --- TAB: PIRATE RADIO --- */}
+        {activeTab === Tab.RADIO && (
+            <div className="h-full flex flex-col items-center justify-start sm:justify-center p-4 sm:p-8 gap-6 sm:gap-8 animate-fade-in max-w-6xl mx-auto overflow-y-auto custom-scrollbar">
                 <div className="w-full flex flex-col lg:flex-row gap-6 sm:gap-8 justify-center items-center">
                     <div className="w-full max-w-sm lg:max-w-md">
                         <PhantomSignal onDeadManToggle={setIsKillSwitchActive} />
@@ -677,9 +688,6 @@ const App: React.FC = () => {
                     <div className="flex justify-center items-center">
                         <TunerUI loraStrength={tunerData.rssi} stemLevels={tunerData.stems} />
                     </div>
-                </div>
-                <div className="w-full pb-8">
-                    <PerformancePad />
                 </div>
             </div>
         )}
