@@ -40,16 +40,50 @@ export function anchorSpirit(sessionHash: string): Promise<ProvenanceRecord> {
             return;
         }
 
+        // OMNIA DATA ANCHORING
+        // We use state variables to anchor the hash to the chain
         const command = `send amount:0 address:0xDEAD state:{"666":"${sessionHash}"}`;
         window.MDS.cmd(command, (response: any) => {
             if (response.status) {
-                console.log("✅ Spirit Anchored.");
+                console.log("✅ Omnia Data Anchored.");
                 resolve({
                     hash: sessionHash,
                     timestamp: Date.now(),
                     blockHeight: response.response?.txpow?.header?.block || 0,
                     signature: response.response?.txpow?.txpowid || "0xPENDING"
                 });
+            } else {
+                reject(response.error);
+            }
+        });
+    });
+}
+
+/**
+ * AXIA TOKENIZATION
+ * Mints a unique NFT-style token on the Minima blockchain representing the audio pattern.
+ */
+export function mintAxiaToken(name: string, sessionHash: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+        if (typeof window.MDS === 'undefined') {
+            console.warn("[Axia] Minima Node Offline. Simulating Token Creation.");
+            setTimeout(() => {
+                resolve({
+                    status: true,
+                    tokenid: "0xAXIA_" + Math.random().toString(36).substring(7),
+                    name: `PHANTOM_${name}`
+                });
+            }, 1500);
+            return;
+        }
+
+        // AXIA TOKEN CREATE
+        // We create a token with the session hash in the description/state
+        const command = `tokencreate name:"PHANTOM_${name}" amount:1 description:"Phantom Audio Provenance: ${sessionHash}"`;
+        window.MDS.cmd(command, (response: any) => {
+            if (response.status) {
+                console.log("💎 Axia Token Minted.");
+                resolve(response.response);
             } else {
                 reject(response.error);
             }

@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { interpretSignal } from '../services/ghostBridge';
 import { SequencerState } from '../types';
+import { generateMidiFile } from '../services/midiWriter';
 
 interface GhostBridgeProps {
   currentState: SequencerState;
@@ -14,6 +15,7 @@ interface Message {
     role: 'USER' | 'SYSTEM' | 'AI';
     text: string;
     timestamp: number;
+    updates?: Partial<SequencerState>;
 }
 
 const GhostBridge: React.FC<GhostBridgeProps> = ({ currentState, onUpdate, isProcessing: externalProcessing }) => {
@@ -63,7 +65,8 @@ const GhostBridge: React.FC<GhostBridgeProps> = ({ currentState, onUpdate, isPro
                 id: (Date.now() + 1).toString(),
                 role: 'AI',
                 text: response.message,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                updates: response.updates
             }]);
         } else {
              setHistory(prev => [...prev, {
@@ -83,6 +86,25 @@ const GhostBridge: React.FC<GhostBridgeProps> = ({ currentState, onUpdate, isPro
     } finally {
         setLocalProcessing(false);
     }
+  };
+
+  const handleMidiExport = (updates: Partial<SequencerState>) => {
+    if (!updates.tracks || !updates.bpm) return;
+    
+    // Create a temporary state for the midi writer
+    const tempState: SequencerState = {
+        ...currentState,
+        tracks: updates.tracks as any,
+        bpm: updates.bpm as any
+    };
+
+    const midiBlob = generateMidiFile(tempState);
+    const url = URL.createObjectURL(midiBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `GHOST_PATTERN_${new Date().getTime()}.mid`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const isBusy = localProcessing || externalProcessing;
@@ -146,7 +168,7 @@ const GhostBridge: React.FC<GhostBridgeProps> = ({ currentState, onUpdate, isPro
                         </div>
                         <div 
                             className={`
-                                max-w-[85%] p-3 border leading-relaxed
+                                max-w-[85%] p-3 border leading-relaxed relative group/msg
                                 ${msg.role === 'USER' 
                                     ? 'bg-gray-900 border-gray-700 text-gray-300' 
                                     : msg.role === 'AI'
@@ -155,6 +177,15 @@ const GhostBridge: React.FC<GhostBridgeProps> = ({ currentState, onUpdate, isPro
                             `}
                         >
                             {msg.text}
+
+                            {msg.role === 'AI' && msg.updates && (
+                                <button 
+                                    onClick={() => handleMidiExport(msg.updates!)}
+                                    className="mt-3 w-full py-2 bg-accent/10 border border-accent/30 text-[9px] font-bold hover:bg-accent hover:text-black transition-all flex items-center justify-center gap-2"
+                                >
+                                    <span>🎹</span> EXPORT_MIDI_FOR_TR8S
+                                </button>
+                            )}
                         </div>
                     </div>
                 ))}

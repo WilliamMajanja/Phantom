@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import SequencerGrid from './components/SequencerGrid';
 import TelemetryDeck from './components/TelemetryDeck';
+import ProvenanceDeck from './components/ProvenanceDeck';
 import ClusterMonitor from './components/ClusterMonitor';
 import GhostBridge from './components/GhostBridge';
 import Knob from './components/Knob';
@@ -19,7 +20,7 @@ import SplashScreen from './components/SplashScreen';
 import { INITIAL_STATE, INSTRUMENT_SETTINGS } from './constants';
 import { SequencerState, ProvenanceRecord, InstrumentType, Track, TelemetryData, Pattern } from './types';
 import { shadowCore } from './services/audio/ShadowCore';
-import { anchorSpirit, captureSpiritHash } from './services/spiritLedger';
+import { anchorSpirit, captureSpiritHash, mintAxiaToken } from './services/spiritLedger';
 import { phantomProtocol } from './services/phantomProtocol';
 import { clusterService } from './services/clusterService';
 import { radioService } from './services/radioService';
@@ -39,6 +40,8 @@ const App: React.FC = () => {
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [provenance, setProvenance] = useState<ProvenanceRecord | null>(null);
   const [isAnchoring, setIsAnchoring] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
+  const [axiaToken, setAxiaToken] = useState<any | null>(null);
   const [focusMode, setFocusMode] = useState(false);
   const [selectedTrackIndex, setSelectedTrackIndex] = useState<number | null>(null);
   const [isAddTrackModalOpen, setIsAddTrackModalOpen] = useState(false);
@@ -320,6 +323,21 @@ const App: React.FC = () => {
     }
   };
 
+  const handleMintAxia = async () => {
+    if (isMinting || isKillSwitchActive) return;
+    setIsMinting(true);
+    try {
+      const { hash } = await captureSpiritHash(state);
+      const patternName = state.patterns[state.activePatternId]?.name || "UNNAMED";
+      const token = await mintAxiaToken(patternName, hash);
+      setAxiaToken(token);
+    } catch (e) {
+      console.error("Axia Mint failed", e);
+    } finally {
+      setIsMinting(false);
+    }
+  };
+
   const handleSessionImport = (newState: any) => {
       if (newState && newState.tracks && newState.bpm) {
           setState(prev => ({
@@ -462,8 +480,21 @@ const App: React.FC = () => {
                 h-7 sm:h-8 px-2 sm:px-4 font-bold text-[8px] sm:text-[10px] tracking-wide border transition-all flex items-center gap-1 sm:gap-2 rounded-sm
                 ${provenance ? 'border-accent text-accent bg-accent/10' : isAnchoring ? 'border-gray-700 text-gray-700' : 'bg-black border-gray-600 text-gray-300 hover:border-white'}
               `}
+              title="Anchor Session to Minima Omnia"
             >
-              {isAnchoring ? <span className="animate-spin text-[10px]">⟳</span> : provenance ? '⚓ ANCHORED' : 'SECURE_HASH'}
+              {isAnchoring ? <span className="animate-spin text-[10px]">⟳</span> : provenance ? '⚓ OMNIA_OK' : 'OMNIA_ANCHOR'}
+            </button>
+
+            <button 
+              onClick={handleMintAxia}
+              disabled={isMinting || !!axiaToken || isKillSwitchActive}
+              className={`
+                h-7 sm:h-8 px-2 sm:px-4 font-bold text-[8px] sm:text-[10px] tracking-wide border transition-all flex items-center gap-1 sm:gap-2 rounded-sm
+                ${axiaToken ? 'border-purple-500 text-purple-500 bg-purple-500/10' : isMinting ? 'border-gray-700 text-gray-700' : 'bg-black border-gray-600 text-gray-300 hover:border-white'}
+              `}
+              title="Mint Provenance Token on Minima Axia"
+            >
+              {isMinting ? <span className="animate-spin text-[10px]">⟳</span> : axiaToken ? '💎 AXIA_MINTED' : 'AXIA_MINT'}
             </button>
             
             <button 
@@ -678,6 +709,7 @@ const App: React.FC = () => {
                 <div className="space-y-8">
                     <ClusterMonitor />
                     <TelemetryDeck data={telemetry} />
+                    <ProvenanceDeck record={provenance} token={axiaToken} />
                 </div>
                 <div className="flex flex-col gap-8">
                     <div className="glass-panel p-6 bg-black flex-grow font-mono border-gray-800">
