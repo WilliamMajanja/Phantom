@@ -41,11 +41,17 @@ const Knob: React.FC<KnobProps> = ({
     document.body.style.cursor = 'ns-resize';
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    setStartY(e.touches[0].clientY);
+    setStartValue(value);
+  };
+
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMove = (clientY: number) => {
       if (!isDragging) return;
       
-      const deltaY = startY - e.clientY;
+      const deltaY = startY - clientY;
       const range = max - min;
       
       const change = (deltaY / 150) * range; // Sensitivity
@@ -64,19 +70,29 @@ const Knob: React.FC<KnobProps> = ({
       onChange(newValue);
     };
 
-    const handleMouseUp = () => {
+    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientY);
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.cancelable) e.preventDefault();
+      handleMove(e.touches[0].clientY);
+    };
+
+    const handleEnd = () => {
       setIsDragging(false);
       document.body.style.cursor = 'default';
     };
 
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('mouseup', handleEnd);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleEnd);
     }
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleEnd);
     };
   }, [isDragging, startY, startValue, min, max, onChange, step]);
 
@@ -86,9 +102,10 @@ const Knob: React.FC<KnobProps> = ({
   return (
     <div className="flex flex-col items-center gap-2 select-none group">
       <div 
-        className="relative cursor-ns-resize"
+        className="relative cursor-ns-resize touch-none"
         style={{ width: sizePx, height: sizePx }}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
       >
         <svg width={sizePx} height={sizePx} className="transform rotate-90">
             {/* Background Track */}

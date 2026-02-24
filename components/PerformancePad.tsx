@@ -45,28 +45,45 @@ const PerformancePad: React.FC = () => {
     };
 
     // XY Pad Logic
-    const updateXY = (e: MouseEvent | React.MouseEvent) => {
+    const updateXY = (clientX: number, clientY: number) => {
         if (!xyRef.current) return;
         const rect = xyRef.current.getBoundingClientRect();
-        const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        const y = Math.max(0, Math.min(1, 1 - ((e.clientY - rect.top) / rect.height))); // 0 at bottom
+        const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const y = Math.max(0, Math.min(1, 1 - ((clientY - rect.top) / rect.height))); // 0 at bottom
         setXY({ x, y });
         shadowCore.setXYPad(x, y);
     };
 
     const handleXYDown = (e: React.MouseEvent) => {
         setDraggingXY(true);
-        updateXY(e);
+        updateXY(e.clientX, e.clientY);
+    };
+
+    const handleXYTouchStart = (e: React.TouchEvent) => {
+        setDraggingXY(true);
+        updateXY(e.touches[0].clientX, e.touches[0].clientY);
     };
 
     useEffect(() => {
         const up = () => setDraggingXY(false);
-        const move = (e: MouseEvent) => { if (draggingXY) updateXY(e); };
+        const move = (e: MouseEvent) => { if (draggingXY) updateXY(e.clientX, e.clientY); };
+        const touchMove = (e: TouchEvent) => {
+            if (draggingXY) {
+                if (e.cancelable) e.preventDefault();
+                updateXY(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        };
+
         window.addEventListener('mouseup', up);
         window.addEventListener('mousemove', move);
+        window.addEventListener('touchend', up);
+        window.addEventListener('touchmove', touchMove, { passive: false });
+
         return () => {
             window.removeEventListener('mouseup', up);
             window.removeEventListener('mousemove', move);
+            window.removeEventListener('touchend', up);
+            window.removeEventListener('touchmove', touchMove);
         };
     }, [draggingXY]);
 
@@ -86,7 +103,8 @@ const PerformancePad: React.FC = () => {
                 <div 
                     ref={xyRef}
                     onMouseDown={handleXYDown}
-                    className="w-40 h-40 sm:w-48 sm:h-48 bg-black border border-gray-700 relative cursor-crosshair overflow-hidden shadow-neo-inner group shrink-0"
+                    onTouchStart={handleXYTouchStart}
+                    className="w-40 h-40 sm:w-48 sm:h-48 bg-black border border-gray-700 relative cursor-crosshair overflow-hidden shadow-neo-inner group shrink-0 touch-none"
                 >
                     {/* Grid Lines */}
                     <div className="absolute inset-0 opacity-20 pointer-events-none" 
@@ -128,8 +146,10 @@ const PerformancePad: React.FC = () => {
                                         key={interval}
                                         onMouseDown={() => toggleStutter(interval)}
                                         onMouseUp={() => { if(isActive) toggleStutter(interval); }} 
+                                        onTouchStart={(e) => { e.preventDefault(); toggleStutter(interval); }}
+                                        onTouchEnd={(e) => { e.preventDefault(); if(isActive) toggleStutter(interval); }}
                                         className={`
-                                            w-10 h-10 rounded flex items-center justify-center font-bold text-xs font-mono border transition-all
+                                            w-10 h-10 rounded flex items-center justify-center font-bold text-xs font-mono border transition-all touch-none
                                             ${isActive 
                                                 ? 'bg-accent text-black border-accent shadow-[0_0_10px_#00ff41] scale-95' 
                                                 : 'bg-black border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'}

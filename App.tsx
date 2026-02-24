@@ -669,16 +669,16 @@ const App: React.FC = () => {
 
         {/* --- TAB: PERFORMANCE --- */}
         {activeTab === Tab.PERFORM && (
-            <div className="h-full flex flex-col items-center justify-center p-8 gap-8 animate-fade-in max-w-6xl mx-auto">
-                <div className="w-full flex flex-col md:flex-row gap-8 justify-center items-center">
-                    <div className="flex-1 w-full max-w-sm">
+            <div className="h-full flex flex-col items-center justify-start sm:justify-center p-4 sm:p-8 gap-6 sm:gap-8 animate-fade-in max-w-6xl mx-auto overflow-y-auto custom-scrollbar">
+                <div className="w-full flex flex-col lg:flex-row gap-6 sm:gap-8 justify-center items-center">
+                    <div className="w-full max-w-sm lg:max-w-md">
                         <PhantomSignal onDeadManToggle={setIsKillSwitchActive} />
                     </div>
-                    <div className="flex-1 flex justify-center">
+                    <div className="flex justify-center items-center">
                         <TunerUI loraStrength={tunerData.rssi} stemLevels={tunerData.stems} />
                     </div>
                 </div>
-                <div className="w-full">
+                <div className="w-full pb-8">
                     <PerformancePad />
                 </div>
             </div>
@@ -686,13 +686,13 @@ const App: React.FC = () => {
 
         {/* --- TAB: PATCHBAY (I/O) --- */}
         {activeTab === Tab.PATCHBAY && (
-            <div className="h-full max-w-7xl mx-auto p-4 md:p-8 flex flex-col gap-4 animate-fade-in">
+            <div className="h-full max-w-7xl mx-auto p-4 md:p-8 flex flex-col gap-6 animate-fade-in overflow-y-auto custom-scrollbar">
                 {/* MIXER CONSOLE - TOP */}
                 <div className="w-full flex-shrink-0">
                     <MixerConsole tracks={state.tracks} onUpdateTrack={handleUpdateTrack} />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-grow min-h-0">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 flex-grow min-h-0 pb-8">
                     <div className="lg:col-span-2 h-full">
                         <PrismControls onSessionImport={handleSessionImport} />
                     </div>

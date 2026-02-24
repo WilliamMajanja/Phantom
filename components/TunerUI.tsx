@@ -26,43 +26,43 @@ const TunerUI: React.FC<TunerUIProps> = ({
   );
 
   return (
-    <div className="w-64 h-64 sm:w-[300px] sm:h-[300px] bg-[#0a0a0a] border border-[#333] rounded-full flex flex-col items-center justify-center relative p-4 sm:p-8 shadow-neo-inner overflow-hidden">
+    <div className="w-56 h-56 sm:w-64 sm:h-64 lg:w-[300px] lg:h-[300px] bg-[#0a0a0a] border border-[#333] rounded-full flex flex-col items-center justify-center relative p-3 sm:p-4 lg:p-8 shadow-neo-inner overflow-hidden shrink-0">
         
         {/* Signal Status Header */}
-        <div className="text-center mb-2 sm:mb-4 z-10">
-            <div className="text-[8px] sm:text-[10px] text-gray-500 font-bold tracking-[0.2em] mb-1">SIGNAL INTEGRITY</div>
-            <div className={`text-xl sm:text-2xl font-mono font-bold ${isDead ? 'text-red-600' : isWeak ? 'text-yellow-500' : 'text-accent'}`}>
-                {loraStrength.toFixed(0)}<span className="text-xs sm:text-sm text-gray-600">%</span>
+        <div className="text-center mb-1 sm:mb-2 lg:mb-4 z-10">
+            <div className="text-[7px] sm:text-[8px] lg:text-[10px] text-gray-500 font-bold tracking-[0.2em] mb-0.5 sm:mb-1 uppercase">SIGNAL INTEGRITY</div>
+            <div className={`text-base sm:text-xl lg:text-2xl font-mono font-bold ${isDead ? 'text-red-600' : isWeak ? 'text-yellow-500' : 'text-accent'}`}>
+                {loraStrength.toFixed(0)}<span className="text-[10px] sm:text-xs lg:text-sm text-gray-600">%</span>
             </div>
-            <div className="text-[8px] sm:text-[9px] text-gray-600 font-mono mt-1">
+            <div className="text-[7px] sm:text-[8px] lg:text-[9px] text-gray-600 font-mono mt-0.5 sm:mt-1">
                 {isDead ? 'NO LINK' : isWeak ? 'WEAK SIGNAL' : 'HIVE SYNCED'}
             </div>
         </div>
 
         {/* Tactical Grid Visualization */}
-        <div className="grid grid-cols-2 gap-x-4 sm:gap-x-8 gap-y-2 sm:gap-y-4 w-full z-10 px-2">
+        <div className="grid grid-cols-2 gap-x-3 sm:gap-x-4 lg:gap-x-8 gap-y-1 sm:gap-y-2 lg:gap-y-4 w-full z-10 px-2 sm:px-4">
             
             <div className="text-right">
-                <div className="text-[8px] sm:text-[9px] text-gray-400 font-bold mb-0.5">VOX</div>
-                <div className="text-[8px] sm:text-[9px] font-mono text-accent">{(stemLevels.vox * 100).toFixed(0)}</div>
+                <div className="text-[7px] sm:text-[8px] lg:text-[9px] text-gray-400 font-bold mb-0.5">VOX</div>
+                <div className="text-[7px] sm:text-[8px] lg:text-[9px] font-mono text-accent">{(stemLevels.vox * 100).toFixed(0)}</div>
                 <Bar level={stemLevels.vox} color="bg-yellow-400" />
             </div>
 
             <div className="text-left">
-                <div className="text-[8px] sm:text-[9px] text-gray-400 font-bold mb-0.5">DRUM</div>
-                <div className="text-[8px] sm:text-[9px] font-mono text-accent">{(stemLevels.drum * 100).toFixed(0)}</div>
+                <div className="text-[7px] sm:text-[8px] lg:text-[9px] text-gray-400 font-bold mb-0.5">DRUM</div>
+                <div className="text-[7px] sm:text-[8px] lg:text-[9px] font-mono text-accent">{(stemLevels.drum * 100).toFixed(0)}</div>
                 <Bar level={stemLevels.drum} color="bg-red-500" />
             </div>
 
             <div className="text-right">
-                <div className="text-[8px] sm:text-[9px] text-gray-400 font-bold mb-0.5">BASS</div>
-                <div className="text-[8px] sm:text-[9px] font-mono text-accent">{(stemLevels.bass * 100).toFixed(0)}</div>
+                <div className="text-[7px] sm:text-[8px] lg:text-[9px] text-gray-400 font-bold mb-0.5">BASS</div>
+                <div className="text-[7px] sm:text-[8px] lg:text-[9px] font-mono text-accent">{(stemLevels.bass * 100).toFixed(0)}</div>
                 <Bar level={stemLevels.bass} color="bg-blue-500" />
             </div>
 
             <div className="text-left">
-                <div className="text-[8px] sm:text-[9px] text-gray-400 font-bold mb-0.5">SYNT</div>
-                <div className="text-[8px] sm:text-[9px] font-mono text-accent">{(stemLevels.other * 100).toFixed(0)}</div>
+                <div className="text-[7px] sm:text-[8px] lg:text-[9px] text-gray-400 font-bold mb-0.5">SYNT</div>
+                <div className="text-[7px] sm:text-[8px] lg:text-[9px] font-mono text-accent">{(stemLevels.other * 100).toFixed(0)}</div>
                 <Bar level={stemLevels.other} color="bg-purple-500" />
             </div>
         </div>

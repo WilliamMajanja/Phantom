@@ -75,15 +75,15 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
   };
 
   return (
-    <div className="glass-panel p-4 sm:p-6 flex flex-col items-center gap-4 sm:gap-6 bg-black relative w-full">
+    <div className="glass-panel p-3 sm:p-6 flex flex-col items-center gap-4 sm:gap-6 bg-black relative w-full max-w-full overflow-hidden">
       <div className="w-full flex justify-between items-center border-b border-gray-800 pb-2">
-         <span className="text-[9px] sm:text-[10px] text-accent font-bold tracking-widest uppercase">PHANTOM SIGNAL</span>
+         <span className="text-[8px] sm:text-[10px] text-accent font-bold tracking-widest uppercase">PHANTOM SIGNAL</span>
          <span className={`text-[8px] sm:text-[9px] font-mono uppercase ${midiReady ? 'text-accent' : 'text-gray-600'}`}>
             {midiReady ? 'LINK_ESTABLISHED' : 'NO_CARRIER'}
          </span>
       </div>
 
-      <div className="flex flex-wrap gap-4 items-center justify-center w-full">
+      <div className="flex flex-row flex-wrap gap-4 items-center justify-center w-full">
           <div className="order-2 sm:order-1">
             <Knob 
                 label="TX_FILTER" 
@@ -95,12 +95,12 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
             />
           </div>
 
-          <div className="flex flex-col items-center gap-2 order-1 sm:order-2 w-full sm:w-auto">
+          <div className="flex flex-col items-center gap-2 order-1 sm:order-2">
               <button 
                 onClick={toggleBroadcast}
                 disabled={killSwitch}
                 className={`
-                    w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center border-2
+                    w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center border-2
                     transition-all duration-100 relative
                     ${isOnAir 
                         ? 'bg-accent/10 border-accent text-accent shadow-[0_0_15px_#00ff41]' 
@@ -108,9 +108,9 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
                     ${killSwitch ? 'opacity-20 cursor-not-allowed' : ''}
                 `}
               >
-                 <span className="font-mono text-xl sm:text-2xl">☢</span>
+                 <span className="font-mono text-lg sm:text-2xl">☢</span>
               </button>
-              <span className={`text-[9px] sm:text-[10px] font-bold tracking-widest ${isOnAir ? 'text-accent animate-pulse' : 'text-gray-600'}`}>
+              <span className={`text-[8px] sm:text-[10px] font-bold tracking-widest ${isOnAir ? 'text-accent animate-pulse' : 'text-gray-600'}`}>
                 {isOnAir ? 'BROADCASTING' : 'SILENT'}
               </span>
           </div>
@@ -128,32 +128,32 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
           </div>
       </div>
 
-       <div className="w-full bg-gray-900/50 border border-gray-800 p-2 rounded text-center flex justify-between items-center px-4">
-            <span className="text-[9px] text-gray-500 font-bold tracking-widest uppercase">CARRIER FREQ</span>
-            <span className="text-lg font-mono text-accent font-bold">{frequency.toFixed(1)} <span className="text-xs text-gray-600">MHz</span></span>
+       <div className="w-full bg-gray-900/50 border border-gray-800 p-1.5 sm:p-2 rounded text-center flex justify-between items-center px-3 sm:px-4">
+            <span className="text-[8px] sm:text-[9px] text-gray-500 font-bold tracking-widest uppercase">CARRIER FREQ</span>
+            <span className="text-base sm:text-lg font-mono text-accent font-bold">{frequency.toFixed(1)} <span className="text-[10px] sm:text-xs text-gray-600">MHz</span></span>
        </div>
 
        {/* RADIO CHAT / NODE MESSENGER */}
-       <div className="w-full flex flex-col gap-2 bg-gray-900/30 p-3 border border-gray-800 rounded">
-           <div className="text-[9px] font-bold text-gray-600 uppercase tracking-widest mb-1">Node Relay // Freq {frequency.toFixed(1)}</div>
-           <div className="h-24 overflow-y-auto flex flex-col gap-1 font-mono text-[10px] custom-scrollbar">
+       <div className="w-full flex flex-col gap-1.5 sm:gap-2 bg-gray-900/30 p-2 sm:p-3 border border-gray-800 rounded">
+           <div className="text-[8px] sm:text-[9px] font-bold text-gray-600 uppercase tracking-widest mb-0.5 sm:mb-1">Node Relay // Freq {frequency.toFixed(1)}</div>
+           <div className="h-20 sm:h-24 overflow-y-auto flex flex-col gap-1 font-mono text-[9px] sm:text-[10px] custom-scrollbar">
                {messages.length === 0 && <div className="text-gray-700 italic">No incoming signals...</div>}
                {messages.map((m, i) => (
                    <div key={i} className="flex gap-2">
                        <span className={m.from === 'YOU' ? 'text-accent' : 'text-blue-400'}>[{m.from?.slice(0,8)}]</span>
-                       <span className="text-gray-300">{m.payload.text}</span>
+                       <span className="text-gray-300 break-all">{m.payload.text}</span>
                    </div>
                ))}
            </div>
-           <form onSubmit={sendRadioMsg} className="flex gap-2 mt-2">
+           <form onSubmit={sendRadioMsg} className="flex gap-2 mt-1 sm:mt-2">
                <input 
                   type="text" 
                   value={inputMsg}
                   onChange={(e) => setInputMsg(e.target.value)}
                   placeholder="TRANSMIT..."
-                  className="flex-1 bg-black border border-gray-800 text-[10px] p-2 text-accent focus:border-accent outline-none"
+                  className="flex-1 bg-black border border-gray-800 text-[9px] sm:text-[10px] p-1.5 sm:p-2 text-accent focus:border-accent outline-none min-w-0"
                />
-               <button type="submit" className="px-3 bg-gray-800 text-[9px] font-bold text-gray-400 hover:bg-accent hover:text-black">SEND</button>
+               <button type="submit" className="px-2 sm:px-3 bg-gray-800 text-[8px] sm:text-[9px] font-bold text-gray-400 hover:bg-accent hover:text-black">SEND</button>
            </form>
        </div>
 
