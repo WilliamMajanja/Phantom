@@ -13,6 +13,9 @@ export XDG_RUNTIME_DIR="/run/user/0" # If running as root
 echo "👻 PHANTOM OS STARTING..."
 
 # 1. INITIALIZE HARDWARE INTERFACES
+# Start the GPIO Controller (Buttons, LEDs, Knobs)
+python3 $PHANTOM_HOME/scripts/gpio_controller.py &
+
 # Start the Dead Man's Switch Monitor
 python3 $PHANTOM_HOME/scripts/kill_switch.py &
 
@@ -20,6 +23,9 @@ python3 $PHANTOM_HOME/scripts/kill_switch.py &
 python3 $PHANTOM_HOME/scripts/hive_mesh.py &
 
 # 2. START AI BACKEND (THE GHOST)
+# Start the Ollama & NPU Bridge
+python3 $PHANTOM_HOME/scripts/ollama_npu_bridge.py &
+
 # Start the Local Llama 3 Interface
 python3 $PHANTOM_HOME/scripts/local_ghost.py &
 

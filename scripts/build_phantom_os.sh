@@ -75,6 +75,9 @@ over_voltage_delta=50000
 # NVMe / PCIe Gen 3 Optimization
 dtparam=pciex1
 dtparam=pciex1_gen=3
+
+# Hailo-8L AI HAT Support
+dtoverlay=hailo-8l
 EOF
 else
     echo "🛡️ Applying Legacy Safe Mode Settings..."
@@ -123,7 +126,9 @@ apt-get install -y \
     wireplumber \
     alsa-utils \
     fonts-jetbrains-mono \
-    rpi-eeprom
+    rpi-eeprom \
+    hailofw \
+    hailo-taped
 
 # Create Phantom Directory
 mkdir -p /opt/phantom
