@@ -6,6 +6,7 @@ import { radioService } from '../services/radioService';
 
 interface PrismControlsProps {
     onSessionImport?: (json: any) => void;
+    onFreqChange?: (freq: number) => void;
 }
 
 interface AudioFile {
@@ -14,7 +15,7 @@ interface AudioFile {
     file: File;
 }
 
-const PrismControls: React.FC<PrismControlsProps> = ({ onSessionImport }) => {
+const PrismControls: React.FC<PrismControlsProps> = ({ onSessionImport, onFreqChange }) => {
   const [active, setActive] = useState(false);
   const [micActive, setMicActive] = useState(false);
   const [isPlayingSample, setIsPlayingSample] = useState(false);

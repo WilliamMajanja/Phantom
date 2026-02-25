@@ -25,6 +25,19 @@ import { phantomProtocol } from './services/phantomProtocol';
 import { clusterService } from './services/clusterService';
 import { radioService } from './services/radioService';
 
+import { 
+  Activity, 
+  Radio, 
+  Layers, 
+  Network, 
+  Cpu, 
+  Zap, 
+  ShieldAlert, 
+  Database,
+  LayoutGrid,
+  Settings2
+} from 'lucide-react';
+
 // TAB DEFINITIONS
 enum Tab {
   CORE = 'SEQUENCER',
@@ -51,6 +64,10 @@ const App: React.FC = () => {
   
   // Navigation State
   const [activeTab, setActiveTab] = useState<Tab>(Tab.CORE);
+
+  // Radio Global State
+  const [isOnAir, setIsOnAir] = useState(false);
+  const [currentFreq, setCurrentFreq] = useState(101.1);
 
   // Hardware State
   const [telemetry, setTelemetry] = useState<TelemetryData>({
@@ -391,18 +408,19 @@ const App: React.FC = () => {
   }
 
   // --- TAB NAVIGATION COMPONENT ---
-  const TabButton = ({ label, tab }: { label: string, tab: Tab }) => (
+  const TabButton = ({ label, tab, icon: Icon }: { label: string, tab: Tab, icon: any }) => (
       <button
           onClick={() => setActiveTab(tab)}
           className={`
               relative px-3 sm:px-6 py-2 sm:py-3 text-[9px] sm:text-[10px] font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase transition-all
-              clip-path-slant z-10 flex-1 sm:flex-none text-center
+              clip-path-slant z-10 flex-1 sm:flex-none flex items-center justify-center gap-2
               ${activeTab === tab 
                   ? 'bg-accent text-black shadow-[0_0_15px_rgba(0,255,65,0.4)]' 
                   : 'bg-gray-900/50 text-gray-500 hover:text-white hover:bg-gray-800'}
           `}
       >
-          {label}
+          <Icon size={14} className={activeTab === tab ? 'text-black' : 'text-gray-600'} />
+          <span className="hidden sm:inline">{label}</span>
           {activeTab === tab && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-white"></div>}
       </button>
   );
@@ -456,6 +474,12 @@ const App: React.FC = () => {
                   <span className="text-[8px] text-gray-600 font-bold uppercase tracking-wide">DSP Clock</span>
                   <span className="text-[10px] text-accent font-mono">{state.bpm.toFixed(1)} <span className="text-gray-600">BPM</span></span>
               </div>
+              {isOnAir && (
+                   <div className="flex flex-col">
+                      <span className="text-[8px] text-red-500 font-bold uppercase tracking-wide animate-pulse">Broadcasting</span>
+                      <span className="text-[10px] text-accent font-mono">{currentFreq.toFixed(1)} <span className="text-gray-600">MHz</span></span>
+                  </div>
+              )}
               {isClusterOnline && (
                    <div className="flex flex-col">
                       <span className="text-[8px] text-gray-600 font-bold uppercase tracking-wide">Mesh Status</span>
@@ -503,7 +527,7 @@ const App: React.FC = () => {
                 className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center border border-gray-800 text-gray-500 hover:text-white hover:bg-gray-800 transition-all rounded-sm"
                 title="Focus Mode"
             >
-                [ ]
+                <LayoutGrid size={14} />
             </button>
         </div>
       </header>
@@ -512,11 +536,11 @@ const App: React.FC = () => {
       {!focusMode && (
           <nav className="h-10 w-full flex border-b border-gray-800 bg-black shrink-0 relative z-40 shadow-neo">
               <div className="flex-1 flex gap-0.5 sm:gap-1 px-1 sm:px-4 items-end overflow-x-auto no-scrollbar">
-                  <TabButton label="SEQUENCER" tab={Tab.CORE} />
-                  <TabButton label="PERFORM" tab={Tab.PERFORM} />
-                  <TabButton label="RADIO" tab={Tab.RADIO} />
-                  <TabButton label="PATCHBAY" tab={Tab.PATCHBAY} />
-                  <TabButton label="NETWORK" tab={Tab.NETWORK} />
+                  <TabButton label="SEQUENCER" tab={Tab.CORE} icon={Layers} />
+                  <TabButton label="PERFORM" tab={Tab.PERFORM} icon={Zap} />
+                  <TabButton label="RADIO" tab={Tab.RADIO} icon={Radio} />
+                  <TabButton label="PATCHBAY" tab={Tab.PATCHBAY} icon={Settings2} />
+                  <TabButton label="NETWORK" tab={Tab.NETWORK} icon={Network} />
               </div>
               <div className="px-4 flex items-center">
                    {isKillSwitchActive && (

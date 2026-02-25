@@ -6,9 +6,11 @@ import Knob from './Knob';
 
 interface PhantomSignalProps {
     onDeadManToggle: (isActive: boolean) => void;
+    onAirChange?: (isOn: boolean) => void;
+    onFreqChange?: (freq: number) => void;
 }
 
-const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
+const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle, onAirChange, onFreqChange }) => {
   const [isOnAir, setIsOnAir] = useState(false);
   const [midiReady, setMidiReady] = useState(false);
   const [filterValue, setFilterValue] = useState(0);
@@ -51,6 +53,7 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
     if (killSwitch) return; // Prevent broadcast if kill switch is active
     const newState = !isOnAir;
     setIsOnAir(newState);
+    onAirChange?.(newState);
     if (midiReady) {
         phantomProtocol.sendCC(51, newState ? 127 : 0);
     }
@@ -63,6 +66,7 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
       
       if (newState) {
           setIsOnAir(false);
+          onAirChange?.(false);
           if (midiReady) phantomProtocol.emergencyFade();
       } else {
           // Resetting safety when disengaging
@@ -79,6 +83,7 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle }) => {
 
   const handleFrequencyChange = (val: number) => {
       setFrequency(val);
+      onFreqChange?.(val);
       setIsScanning(true);
       setTimeout(() => setIsScanning(false), 500); // Simulate scanning delay
       radioService.joinFrequency(val.toFixed(1));
