@@ -59,7 +59,9 @@ async function startServer() {
     try {
       // Call the local_ghost.py script
       // We use python3 to ensure we use the correct environment on Pi
-      const { stdout, stderr } = await execAsync(`python3 scripts/local_ghost.py "${prompt || mood || 'dark techno'}"`);
+      // Escape prompt to prevent command injection
+      const safePrompt = (prompt || mood || 'dark techno').replace(/"/g, '\\"');
+      const { stdout, stderr } = await execAsync(`python3 scripts/local_ghost.py "${safePrompt}"`);
       
       if (stderr && !stdout) {
         console.error("[GHOST] Script Error:", stderr);
