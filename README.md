@@ -118,7 +118,7 @@ While the web simulation is powerful, PHANTOM is designed for the **Raspberry Pi
 ---
 
 <div align="center">
-  <p><strong>Decentralized for Edge Computing</strong></p>
+  <p><strong>CODE IS LAW. MUSIC IS SPIRIT.</strong></p>
   <p>Developed by <strong>Infinity Collaborations SDH</strong></p>
   <p>© 2026 // ALL RIGHTS RESERVED</p>
 </div>
