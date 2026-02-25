@@ -75,69 +75,55 @@ export const interpretSignal = async (
   currentState: SequencerState
 ): Promise<BridgeResponse> => {
   
-  // 1. LOCAL FALLBACK (Offline / No Key)
-  if (!ai || !API_KEY) {
-      console.log("👻 Ghost Bridge: Offline Protocol Engaged.");
-      const localUpdates = generateLocalPattern(userPrompt, currentState);
-      return {
-          success: true,
-          message: "OFFLINE_MODE: PATTERN_GENERATED_VIA_HEURISTICS",
-          updates: localUpdates
-      };
-  }
-
-  // 2. GEMINI CLOUD PROTOCOL
-  const model = 'gemini-3-flash-preview';
-  
-  // Lightweight Context
-  const contextString = JSON.stringify({
-    bpm: currentState.bpm,
-    swing: currentState.swing,
-    activePattern: currentState.activePatternId,
-    patternName: currentState.patterns[currentState.activePatternId]?.name,
-    tracks: currentState.tracks.map(t => ({ 
-        name: t.name, 
-        type: t.type,
-        activeSteps: t.steps.filter(s => s.active).length
-    }))
-  });
-
-  const history: Content[] = [
-    {
-      role: 'user',
-      parts: [{ text: `SYSTEM_STATUS: ${contextString}\nINSTRUCTION: Initialize Ghost Protocol.` }]
-    },
-    {
-      role: 'model',
-      parts: [{ text: "GHOST_BRIDGE_ONLINE. AWAITING_SIGNAL." }]
-    }
-  ];
-
-  const systemInstruction = `
-    You are the Ghost in the Machine, an AI music composer for the Phantom workstation.
-    
-    PROTOCOL:
-    1. If the user asks for music/beat/pattern or uses commands like /GENERATE, /REMIX, /MUTATE, /EVOLVE, use 'summon_pattern'.
-    2. If the user uses /CLEAR, use 'summon_pattern' with all steps set to active: false.
-    3. If the user asks a question or chats, reply textually.
-    
-    COMMAND SEMANTICS:
-    - /GENERATE: Create a completely new pattern from scratch.
-    - /REMIX: Keep the current instrumentation but change the rhythms significantly.
-    - /MUTATE: Make subtle changes to the current pattern (add/remove a few steps).
-    - /EVOLVE: Gradually increase complexity or intensity.
-    - /CLEAR: Wipe the sequencer.
-    
-    AESTHETIC:
-    Favor dark, industrial, techno, and cybernetic themes. 
-    Speak briefly and enigmatically. Use technical jargon like "RECONFIGURING_OSCILLATORS", "BIT_CRUSHING_SIGNAL_PATH", "SYNCHRONIZING_HIVE_NODES".
-  `;
-
-  const MAX_RETRIES = 2;
-  let attempt = 0;
-
-  while (attempt <= MAX_RETRIES) {
+  // 1. CLOUD PROTOCOL (Gemini)
+  if (ai && API_KEY) {
     try {
+      const model = 'gemini-3-flash-preview';
+      
+      // Lightweight Context
+      const contextString = JSON.stringify({
+        bpm: currentState.bpm,
+        swing: currentState.swing,
+        activePattern: currentState.activePatternId,
+        patternName: currentState.patterns[currentState.activePatternId]?.name,
+        tracks: currentState.tracks.map(t => ({ 
+            name: t.name, 
+            type: t.type,
+            activeSteps: t.steps.filter(s => s.active).length
+        }))
+      });
+
+      const history: Content[] = [
+        {
+          role: 'user',
+          parts: [{ text: `SYSTEM_STATUS: ${contextString}\nINSTRUCTION: Initialize Ghost Protocol.` }]
+        },
+        {
+          role: 'model',
+          parts: [{ text: "GHOST_BRIDGE_ONLINE. AWAITING_SIGNAL." }]
+        }
+      ];
+
+      const systemInstruction = `
+        You are the Ghost in the Machine, an AI music composer for the Phantom workstation.
+        
+        PROTOCOL:
+        1. If the user asks for music/beat/pattern or uses commands like /GENERATE, /REMIX, /MUTATE, /EVOLVE, use 'summon_pattern'.
+        2. If the user uses /CLEAR, use 'summon_pattern' with all steps set to active: false.
+        3. If the user asks a question or chats, reply textually.
+        
+        COMMAND SEMANTICS:
+        - /GENERATE: Create a completely new pattern from scratch.
+        - /REMIX: Keep the current instrumentation but change the rhythms significantly.
+        - /MUTATE: Make subtle changes to the current pattern (add/remove a few steps).
+        - /EVOLVE: Gradually increase complexity or intensity.
+        - /CLEAR: Wipe the sequencer.
+        
+        AESTHETIC:
+        Favor dark, industrial, techno, and cybernetic themes. 
+        Speak briefly and enigmatically. Use technical jargon like "RECONFIGURING_OSCILLATORS", "BIT_CRUSHING_SIGNAL_PATH", "SYNCHRONIZING_HIVE_NODES".
+      `;
+
       const chat = ai.chats.create({
         model,
         config: {
@@ -148,75 +134,58 @@ export const interpretSignal = async (
         history: history
       });
 
-      // Add a timeout to the request
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("SIGNAL_TIMEOUT")), 10000)
-      );
-
-      const result = await Promise.race([
-        chat.sendMessage({ message: userPrompt }),
-        timeoutPromise
-      ]) as any;
-
+      const result = await chat.sendMessage({ message: userPrompt });
       const functionCalls = result.functionCalls;
       
-      // A. Function Call (Sequencer Update)
       if (functionCalls && functionCalls.length > 0) {
         const call = functionCalls[0];
         if (call.name === 'summon_pattern') {
           const args = call.args as any;
           const updates = parseGeneratedState(args, currentState);
-          
-          const trackCount = updates.tracks?.length || 0;
-          const bpmMsg = updates.bpm ? `BPM:${updates.bpm}` : 'BPM:KEEP';
-          const msg = `PROTOCOL_EXECUTED // ${bpmMsg} // RECONFIGURED_${trackCount}_MODULES`;
-
           return {
               success: true,
-              message: msg,
+              message: `PROTOCOL_EXECUTED // RECONFIGURED_${updates.tracks?.length}_MODULES`,
               updates: updates
           };
         }
       }
       
-      // B. Conversational Response (No Update)
       if (result.text) {
-          return {
-              success: true,
-              message: result.text,
-              updates: undefined
-          };
+          return { success: true, message: result.text };
       }
-      
-      // C. Fallback (Only if response is empty)
-      const localUpdates = generateLocalPattern(userPrompt, currentState);
-      return {
-          success: true,
-          message: "SIGNAL_WEAK // FALLBACK_TO_LOCAL_GENERATOR",
-          updates: localUpdates
-      };
-
-    } catch (error: any) {
-      attempt++;
-      console.warn(`Ghost Bridge Attempt ${attempt} Failed: ${error.message}`);
-      
-      if (attempt > MAX_RETRIES) {
-        console.warn("Ghost Bridge: Max Retries Exceeded. Switching to Local Mode.");
-        const localUpdates = generateLocalPattern(userPrompt, currentState);
-        return {
-            success: true,
-            message: `CONNECTION_LOST (${error.message}) // LOCAL_OVERRIDE_ACTIVE`,
-            updates: localUpdates
-        };
-      }
-      
-      // Wait before retrying (exponential backoff)
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    } catch (e) {
+      console.warn("Ghost Bridge: Cloud Signal Lost. Switching to Local Node.");
     }
   }
 
-  // Should never reach here due to the return in the catch block
-  return { success: false, message: "UNKNOWN_PROTOCOL_ERROR" };
+  // 2. LOCAL PROTOCOL (Ollama / AirLLM)
+  try {
+    const response = await fetch('/api/ghost/summon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userPrompt, bpm: currentState.bpm })
+    });
+    
+    const data = await response.json();
+    if (data.success && data.pattern) {
+        const updates = parseGeneratedState(data.pattern, currentState);
+        return {
+            success: true,
+            message: "LOCAL_GHOST_ONLINE // PATTERN_SUMMONED",
+            updates: updates
+        };
+    }
+  } catch (e) {
+      console.error("Local Ghost Error:", e);
+  }
+
+  // 3. HEURISTIC FALLBACK
+  const localUpdates = generateLocalPattern(userPrompt, currentState);
+  return {
+      success: true,
+      message: "SIGNAL_WEAK // FALLBACK_TO_HEURISTIC_GENERATOR",
+      updates: localUpdates
+  };
 };
 
 // --- HELPER: Parse Gemini Output ---

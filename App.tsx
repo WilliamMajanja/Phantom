@@ -38,6 +38,8 @@ import {
   Settings2
 } from 'lucide-react';
 
+import { logService, LogEntry } from './services/logService';
+
 // TAB DEFINITIONS
 enum Tab {
   CORE = 'SEQUENCER',
@@ -61,6 +63,9 @@ const App: React.FC = () => {
   const [isAddTrackModalOpen, setIsAddTrackModalOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isClusterOnline, setIsClusterOnline] = useState(false);
+  const [serverOnline, setServerOnline] = useState(false);
+  const [systemLogs, setSystemLogs] = useState<LogEntry[]>([]);
+  const [systemStatus, setSystemStatus] = useState({ ollama: false, hailo: false, minima: false, radio: true, kernel: 'OK', cpu_temp: 45 });
   
   // Navigation State
   const [activeTab, setActiveTab] = useState<Tab>(Tab.CORE);
@@ -80,13 +85,16 @@ const App: React.FC = () => {
   const stateRef = useRef(state);
   useEffect(() => { stateRef.current = state; }, [state]);
 
-  // Simulation Loop
+  // Simulation Loop & System Monitoring
   useEffect(() => {
     if (!bootComplete) return;
 
     clusterService.connect(); 
+    
+    // Subscribe to logs
+    const unsubscribeLogs = logService.subscribe(setSystemLogs);
 
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
         setTelemetry(prev => ({
             // Safe Mode: Cap temp at 70 to prevent accidental Panic Trigger (80C)
             cpuTemp: Math.min(70, Math.max(35, prev.cpuTemp + (Math.random() - 0.5) * 3)),
@@ -108,8 +116,31 @@ const App: React.FC = () => {
         const nodes = clusterService.getStatus();
         setIsClusterOnline(nodes.some(n => n.id !== 'NEXUS' && n.online));
 
-    }, 1000);
-    return () => clearInterval(interval);
+        // Fetch System Status
+        try {
+            const res = await fetch('/api/system/status');
+            if (res.ok) {
+                const status = await res.json();
+                setSystemStatus(status);
+                setServerOnline(true);
+                if (status.cpu_temp) {
+                    setTelemetry(prev => ({ ...prev, cpuTemp: status.cpu_temp }));
+                }
+            } else {
+                setServerOnline(false);
+            }
+        } catch(e) {
+            setServerOnline(false);
+        }
+
+    }, 2000);
+
+    logService.addLog('SUCCESS', 'NETWORK', 'MESH_NET_DISCOVERY_ACTIVE');
+    
+    return () => {
+        clearInterval(interval);
+        unsubscribeLogs();
+    };
   }, [bootComplete]);
 
   // Audio Engine Synchronization
@@ -132,6 +163,7 @@ const App: React.FC = () => {
         if (step === 0) {
             setState(prev => {
                 if (prev.nextPatternId && prev.nextPatternId !== prev.activePatternId) {
+                    logService.addLog('INFO', 'SEQUENCER', `SWITCHING_TO_PATTERN: ${prev.patterns[prev.nextPatternId].name}`);
                     return {
                         ...prev,
                         activePatternId: prev.nextPatternId,
@@ -306,17 +338,20 @@ const App: React.FC = () => {
       if (isKillSwitchActive) return;
       await shadowCore.play();
       setState(prev => ({ ...prev, playing: true }));
+      logService.addLog('SUCCESS', 'AUDIO', 'PLAYBACK_STARTED');
   };
 
   const handlePause = () => {
       shadowCore.pause();
       setState(prev => ({ ...prev, playing: false }));
+      logService.addLog('INFO', 'AUDIO', 'PLAYBACK_PAUSED');
   };
 
   const handleStop = () => {
       shadowCore.stop();
       setState(prev => ({ ...prev, playing: false }));
       setCurrentStep(0);
+      logService.addLog('INFO', 'AUDIO', 'PLAYBACK_STOPPED');
   };
 
   const queuePattern = (patternId: string) => {
@@ -324,7 +359,22 @@ const App: React.FC = () => {
   };
 
   const handleAIUpdate = (updates: Partial<SequencerState>) => {
-      setState(prev => ({ ...prev, ...updates }));
+      setState(prev => {
+          const newState = { ...prev, ...updates };
+          // If tracks are updated, update the active pattern too
+          if (updates.tracks) {
+              const pid = prev.activePatternId;
+              newState.patterns = {
+                  ...prev.patterns,
+                  [pid]: {
+                      ...prev.patterns[pid],
+                      tracks: updates.tracks as Track[]
+                  }
+              };
+          }
+          logService.addLog('SUCCESS', 'GHOST', 'PATTERN_RECONFIGURED');
+          return newState;
+      });
   };
 
   const handleExportSession = async () => {
@@ -334,8 +384,10 @@ const App: React.FC = () => {
       const { hash } = await captureSpiritHash(state);
       const record = await anchorSpirit(hash);
       setProvenance(record);
+      logService.addLog('SUCCESS', 'OMNIA', 'SPIRIT_ANCHORED');
     } catch (e) {
       console.error("Spirit Anchor failed", e);
+      logService.addLog('ERROR', 'OMNIA', 'ANCHOR_FAILED');
     } finally {
       setIsAnchoring(false);
     }
@@ -349,8 +401,10 @@ const App: React.FC = () => {
       const patternName = state.patterns[state.activePatternId]?.name || "UNNAMED";
       const token = await mintAxiaToken(patternName, hash);
       setAxiaToken(token);
+      logService.addLog('SUCCESS', 'AXIA', 'TOKEN_MINTED');
     } catch (e) {
       console.error("Axia Mint failed", e);
+      logService.addLog('ERROR', 'AXIA', 'MINT_FAILED');
     } finally {
       setIsMinting(false);
     }
@@ -364,6 +418,7 @@ const App: React.FC = () => {
               tracks: newState.tracks,
               swing: newState.swing || 0
           }));
+          logService.addLog('INFO', 'SYSTEM', 'SESSION_IMPORTED');
       }
   };
 
@@ -394,11 +449,13 @@ const App: React.FC = () => {
           };
       });
       setIsAddTrackModalOpen(false);
+      logService.addLog('INFO', 'CORE', `MODULE_ADDED: ${settings.name}`);
   };
 
   useEffect(() => {
       if (isKillSwitchActive && state.playing) {
           handleStop();
+          logService.addLog('WARN', 'SYSTEM', 'EMERGENCY_STOP_TRIGGERED');
       }
   }, [isKillSwitchActive]);
 
@@ -467,8 +524,14 @@ const App: React.FC = () => {
            {/* STATUS INDICATORS */}
            <div className="hidden md:flex gap-6 border-l border-gray-800 pl-6">
               <div className="flex flex-col">
+                  <span className="text-[8px] text-gray-600 font-bold uppercase tracking-wide">Core Server</span>
+                  <span className={`text-[10px] ${serverOnline ? 'text-accent' : 'text-red-500'} font-mono`}>
+                      {serverOnline ? 'CONNECTED' : 'OFFLINE'}
+                  </span>
+              </div>
+              <div className="flex flex-col">
                   <span className="text-[8px] text-gray-600 font-bold uppercase tracking-wide">Kernel</span>
-                  <span className="text-[10px] text-gray-300">PiNet_Os Kernel</span>
+                  <span className="text-[10px] text-gray-300">{systemStatus.kernel || 'PiNet_Os'}</span>
               </div>
               <div className="flex flex-col">
                   <span className="text-[8px] text-gray-600 font-bold uppercase tracking-wide">DSP Clock</span>
@@ -707,7 +770,11 @@ const App: React.FC = () => {
             <div className="h-full flex flex-col items-center justify-start sm:justify-center p-4 sm:p-8 gap-6 sm:gap-8 animate-fade-in max-w-6xl mx-auto overflow-y-auto custom-scrollbar">
                 <div className="w-full flex flex-col lg:flex-row gap-6 sm:gap-8 justify-center items-center">
                     <div className="w-full max-w-sm lg:max-w-md">
-                        <PhantomSignal onDeadManToggle={setIsKillSwitchActive} />
+                        <PhantomSignal 
+                            onDeadManToggle={setIsKillSwitchActive} 
+                            onAirChange={setIsOnAir}
+                            onFreqChange={setCurrentFreq}
+                        />
                     </div>
                     <div className="flex justify-center items-center">
                         <TunerUI loraStrength={tunerData.rssi} stemLevels={tunerData.stems} />
@@ -726,7 +793,10 @@ const App: React.FC = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 flex-grow min-h-0 pb-8">
                     <div className="lg:col-span-2 h-full">
-                        <PrismControls onSessionImport={handleSessionImport} />
+                        <PrismControls 
+                            onSessionImport={handleSessionImport} 
+                            onFreqChange={setCurrentFreq}
+                        />
                     </div>
                     <div className="lg:col-span-1 h-full">
                         <HiveSync />
@@ -744,18 +814,47 @@ const App: React.FC = () => {
                     <ProvenanceDeck record={provenance} token={axiaToken} />
                 </div>
                 <div className="flex flex-col gap-8">
-                    <div className="glass-panel p-6 bg-black flex-grow font-mono border-gray-800">
+                    {/* SYSTEM AVAILABILITY */}
+                    <div className="glass-panel p-6 bg-black border-gray-800">
+                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Component Status</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex items-center justify-between p-3 bg-gray-900/50 border border-gray-800 rounded">
+                                <span className="text-[10px] font-bold">OLLAMA_NODE</span>
+                                <div className={`w-2 h-2 rounded-full ${systemStatus.ollama ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500'}`}></div>
+                            </div>
+                            <div className={`flex items-center justify-between p-3 bg-gray-900/50 border border-gray-800 rounded ${!systemStatus.hailo ? 'opacity-50' : ''}`}>
+                                <span className="text-[10px] font-bold">HAILO_NPU</span>
+                                <div className={`w-2 h-2 rounded-full ${systemStatus.hailo ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500'}`}></div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-gray-900/50 border border-gray-800 rounded">
+                                <span className="text-[10px] font-bold">MINIMA_NODE</span>
+                                <div className={`w-2 h-2 rounded-full ${systemStatus.minima ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500'}`}></div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-gray-900/50 border border-gray-800 rounded">
+                                <span className="text-[10px] font-bold">PI_FM_RDS</span>
+                                <div className={`w-2 h-2 rounded-full ${systemStatus.radio ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500'}`}></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* DYNAMIC SYSTEM LOG */}
+                    <div className="glass-panel p-6 bg-black flex-grow font-mono border-gray-800 flex flex-col">
                         <div className="flex justify-between border-b border-gray-800 pb-2 mb-2">
                              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">SYSTEM_LOG</h3>
-                             <span className="text-[9px] text-accent animate-pulse">LIVE</span>
+                             <span className="text-[9px] text-accent animate-pulse">LIVE_STREAM</span>
                         </div>
-                        <div className="text-[10px] text-gray-400 h-64 overflow-y-auto custom-scrollbar space-y-1">
-                            <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-green-500">MINIMA_LEDGER</span>: CONNECTED</p>
-                            <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-purple-400">GHOST_BRIDGE</span>: GEMINI-1.5-FLASH READY</p>
-                            <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-blue-400">AUDIO_ENGINE</span>: 48kHz 32-BIT FLOAT</p>
-                            <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-yellow-500">HIVE_MESH</span>: LISTENING ON 915MHz</p>
-                            <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-white">KERNEL</span>: PiNet_Os Kernel v1.2 OK</p>
-                            <p><span className="text-gray-600">[{new Date().toLocaleTimeString()}]</span> <span className="text-red-400">NPU</span>: HAILO-8L ONLINE</p>
+                        <div className="text-[10px] flex-grow overflow-y-auto custom-scrollbar space-y-1 pr-2">
+                            {systemLogs.map((log, i) => (
+                                <p key={i} className="animate-fade-in">
+                                    <span className="text-gray-600">[{log.timestamp}]</span>{' '}
+                                    <span className={`
+                                        ${log.level === 'ERROR' ? 'text-red-500' : 
+                                          log.level === 'WARN' ? 'text-yellow-500' : 
+                                          log.level === 'SUCCESS' ? 'text-green-500' : 
+                                          log.level === 'SYSTEM' ? 'text-white' : 'text-blue-400'}
+                                    `}>{log.source}</span>: {log.message}
+                                </p>
+                            ))}
                         </div>
                     </div>
                 </div>

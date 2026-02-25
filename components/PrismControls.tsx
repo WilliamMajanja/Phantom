@@ -19,6 +19,27 @@ const PrismControls: React.FC<PrismControlsProps> = ({ onSessionImport, onFreqCh
   const [active, setActive] = useState(false);
   const [micActive, setMicActive] = useState(false);
   const [isPlayingSample, setIsPlayingSample] = useState(false);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [rdsText, setRdsText] = useState('PHANTOM_OS');
+  const [frequency, setFrequency] = useState(101.1);
+
+  const triggerRDS = async () => {
+      try {
+          await fetch('/api/radio/rds', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: rdsText, freq: frequency })
+          });
+      } catch (e) {
+          console.error("RDS Failed", e);
+      }
+  };
+
+  const handleFreqChangeInternal = (val: number) => {
+      setFrequency(val);
+      onFreqChange?.(val);
+      radioService.joinFrequency(val.toFixed(1));
+  };
   
   // Library State
   const [library, setLibrary] = useState<AudioFile[]>([]);
@@ -438,30 +459,45 @@ const PrismControls: React.FC<PrismControlsProps> = ({ onSessionImport, onFreqCh
                          <span className="text-[8px] font-mono text-gray-500">GPIO_04 // ACTIVE</span>
                       </div>
                       
-                      <div className="flex items-center gap-3">
-                          <div className="flex-1 bg-black border border-gray-800 rounded flex items-center px-3 py-1.5">
-                              <span className="text-[10px] font-mono text-gray-600 mr-2">FREQ:</span>
-                              <input 
-                                  type="number" 
-                                  step="0.1"
-                                  defaultValue="101.1" 
-                                  className="bg-transparent text-sm font-mono text-accent w-full focus:outline-none tabular-nums"
-                                  onChange={(e) => {
-                                      const val = parseFloat(e.target.value);
-                                      if (!isNaN(val)) radioService.joinFrequency(val.toFixed(1));
-                                  }}
-                              />
-                              <span className="text-[10px] font-mono text-gray-600 ml-2">MHz</span>
+                      <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-3">
+                              <div className="flex-1 bg-black border border-gray-800 rounded flex items-center px-3 py-1.5">
+                                  <span className="text-[10px] font-mono text-gray-600 mr-2">FREQ:</span>
+                                  <input 
+                                      type="number" 
+                                      step="0.1"
+                                      value={frequency} 
+                                      className="bg-transparent text-sm font-mono text-accent w-full focus:outline-none tabular-nums"
+                                      onChange={(e) => {
+                                          const val = parseFloat(e.target.value);
+                                          if (!isNaN(val)) handleFreqChangeInternal(val);
+                                      }}
+                                  />
+                                  <span className="text-[10px] font-mono text-gray-600 ml-2">MHz</span>
+                              </div>
+                              <button 
+                                 className={`px-4 py-2 text-[10px] font-black rounded-sm transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(0,255,65,0.2)] ${isBroadcasting ? 'bg-red-600 text-white' : 'bg-accent text-black hover:bg-accent/80'}`}
+                                 onClick={() => setIsBroadcasting(!isBroadcasting)}
+                              >
+                                  {isBroadcasting ? 'TX_STOP' : 'TX_START'}
+                              </button>
                           </div>
-                          <button 
-                             className="px-4 py-2 bg-accent text-black text-[10px] font-black rounded-sm hover:bg-accent/80 transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(0,255,65,0.2)]"
-                             onClick={() => {
-                                 // Simulation of starting the Python script via radioService or similar
-                                 console.log("FM Broadcast Started");
-                             }}
-                          >
-                              TX_START
-                          </button>
+                          
+                          <div className="flex items-center gap-2">
+                              <input 
+                                  type="text"
+                                  value={rdsText}
+                                  onChange={(e) => setRdsText(e.target.value)}
+                                  placeholder="RDS_TEXT..."
+                                  className="flex-grow bg-black border border-gray-800 rounded px-3 py-1.5 text-[10px] font-mono text-accent focus:outline-none"
+                              />
+                              <button 
+                                 onClick={triggerRDS}
+                                 className="px-3 py-1.5 bg-gray-900 border border-gray-700 text-[8px] font-bold text-gray-400 hover:text-accent hover:border-accent transition-all"
+                              >
+                                  SEND_RDS
+                              </button>
+                          </div>
                       </div>
                   </div>
 
