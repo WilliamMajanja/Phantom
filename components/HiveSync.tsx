@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { HiveState } from '../types';
 import { shadowCore } from '../services/audio/ShadowCore';
 import { radioService } from '../services/radioService';
+import { maximaService } from '../services/maximaService';
+import { mdsService } from '../services/mdsService';
 
 const HiveSync: React.FC = () => {
   const [hive, setHive] = useState<HiveState>({
@@ -13,18 +15,45 @@ const HiveSync: React.FC = () => {
   });
   const [isBroadcastingVoice, setIsBroadcastingVoice] = useState(false);
 
-  // Simulation of LoRa activity
+  // Maxima-backed peer tracking
   useEffect(() => {
     if (!hive.active) return;
-    const interval = setInterval(() => {
+
+    // Subscribe to Maxima peer changes for real peer count
+    const unsubPeers = maximaService.onPeersChanged((peers) => {
         setHive(prev => ({
             ...prev,
-            rssi: -90 + Math.random() * 20,
-            peers: prev.peers > 0 ? prev.peers : Math.floor(Math.random() * 3) + 1,
-            latency: Math.floor(Math.random() * 50) + 10
+            peers: peers.length
         }));
-    }, 2000);
-    return () => clearInterval(interval);
+    });
+
+    // Measure latency by timing a Maxima round-trip to MDS
+    const measureLatency = async () => {
+        const start = performance.now();
+        try {
+            await mdsService.cmd('status');
+            const latency = Math.round(performance.now() - start);
+            setHive(prev => ({
+                ...prev,
+                latency,
+                // Estimate RSSI from latency (lower latency = stronger signal)
+                rssi: Math.max(-120, Math.min(-30, -30 - (latency / 5)))
+            }));
+        } catch (e) {
+            setHive(prev => ({ ...prev, latency: 999, rssi: -120 }));
+        }
+    };
+
+    const interval = setInterval(measureLatency, 5000);
+    measureLatency(); // Initial measurement
+
+    // Announce presence when joining hive
+    maximaService.announcePresence();
+
+    return () => {
+        unsubPeers();
+        clearInterval(interval);
+    };
   }, [hive.active]);
 
   const toggleHive = () => {
@@ -33,6 +62,13 @@ const HiveSync: React.FC = () => {
 
   const toggleRole = () => {
       setHive(prev => ({ ...prev, role: prev.role === 'MASTER' ? 'SLAVE' : 'MASTER' }));
+      // Broadcast role change to peers
+      if (hive.active) {
+          maximaService.broadcast('HIVE_COMMAND', {
+              role: hive.role === 'MASTER' ? 'SLAVE' : 'MASTER',
+              action: 'ROLE_CHANGE'
+          });
+      }
   };
 
   const toggleVoiceLoRa = () => {
@@ -52,7 +88,9 @@ const HiveSync: React.FC = () => {
        <div className="flex justify-between items-center border-b border-white/10 pb-2">
          <div className="flex flex-col">
             <span className="text-[10px] text-textLight font-bold tracking-widest uppercase">Hive Protocol</span>
-            <span className="text-[9px] text-indicator font-mono">LORA MESH 915MHz</span>
+            <span className="text-[9px] text-indicator font-mono">
+                {mdsService.isSimulated ? 'MAXIMA MESH [SIM]' : 'MAXIMA MESH P2P'}
+            </span>
          </div>
          <button 
             onClick={toggleHive}

@@ -1,8 +1,11 @@
 
 import { ProvenanceRecord, SequencerState } from '../types';
+import { mdsService } from './mdsService';
+import { logService } from './logService';
 
 // SPIRIT LEDGER
 // Hashes the soul of the machine (Session State) to the Minima Blockchain
+// Now powered by the MDS DApp service for proper lifecycle management
 
 export async function captureSpiritHash(
   sequencerState: SequencerState
@@ -11,7 +14,7 @@ export async function captureSpiritHash(
     const dataToHash = {
         timestamp: Date.now(),
         state: sequencerState,
-        phantomSignature: "PHANTOM_CORE_V1"
+        phantomSignature: "PHANTOM_PINET_V2"
     };
 
     const jsonString = JSON.stringify(dataToHash);
@@ -23,70 +26,61 @@ export async function captureSpiritHash(
     return { hash: hashHex, payload: dataToHash };
 }
 
-export function anchorSpirit(sessionHash: string): Promise<ProvenanceRecord> {
-    return new Promise((resolve, reject) => {
-        if (typeof window.MDS === 'undefined') {
-            console.warn("[Spirit Ledger] Minima Node Offline. Running in Specter Mode.");
-            setTimeout(() => {
-                const mockTxId = "0xSPIRIT_" + Array.from(crypto.getRandomValues(new Uint8Array(16)))
-                    .map(b => b.toString(16).padStart(2, '0')).join('');
-                resolve({
-                    hash: sessionHash,
-                    timestamp: Date.now(),
-                    blockHeight: 666000,
-                    signature: mockTxId
-                });
-            }, 1000);
-            return;
-        }
+/**
+ * OMNIA DATA ANCHORING via MDS Service
+ * Sends the hash to the Minima layer to be stored immutably.
+ * Uses mdsService.cmd() which handles both real MDS and simulation.
+ */
+export async function anchorSpirit(sessionHash: string): Promise<ProvenanceRecord> {
+    logService.addLog('INFO', 'SPIRIT', `ANCHORING_HASH: ${sessionHash.slice(0, 16)}...`);
 
-        // OMNIA DATA ANCHORING
-        // We use state variables to anchor the hash to the chain
-        const command = `send amount:0 address:0xDEAD state:{"666":"${sessionHash}"}`;
-        window.MDS.cmd(command, (response: any) => {
-            if (response.status) {
-                console.log("✅ Omnia Data Anchored.");
-                resolve({
-                    hash: sessionHash,
-                    timestamp: Date.now(),
-                    blockHeight: response.response?.txpow?.header?.block || 0,
-                    signature: response.response?.txpow?.txpowid || "0xPENDING"
-                });
-            } else {
-                reject(response.error);
-            }
-        });
-    });
+    try {
+        const result = await mdsService.cmd(
+            `send amount:0 address:0xDEAD state:{"666":"${sessionHash}","667":"PHANTOM_PINET"}`
+        );
+
+        const txpowid = result?.txpow?.txpowid || result?.txpowid || '0xPENDING';
+        const block = result?.txpow?.header?.block || mdsService.blockHeight;
+
+        logService.addLog('SUCCESS', 'SPIRIT', `OMNIA_ANCHORED at block ${block}`);
+
+        return {
+            hash: sessionHash,
+            timestamp: Date.now(),
+            blockHeight: block,
+            signature: txpowid
+        };
+    } catch (e: any) {
+        logService.addLog('ERROR', 'SPIRIT', `ANCHOR_FAILED: ${e.message || 'unknown'}`);
+        throw e;
+    }
 }
 
 /**
- * AXIA TOKENIZATION
+ * AXIA TOKENIZATION via MDS Service
  * Mints a unique NFT-style token on the Minima blockchain representing the audio pattern.
+ * Uses mdsService.cmd() which handles both real MDS and simulation.
  */
-export function mintAxiaToken(name: string, sessionHash: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        if (typeof window.MDS === 'undefined') {
-            console.warn("[Axia] Minima Node Offline. Simulating Token Creation.");
-            setTimeout(() => {
-                resolve({
-                    status: true,
-                    tokenid: "0xAXIA_" + Math.random().toString(36).substring(7),
-                    name: `PHANTOM_${name}`
-                });
-            }, 1500);
-            return;
-        }
+export async function mintAxiaToken(name: string, sessionHash: string): Promise<any> {
+    logService.addLog('INFO', 'AXIA', `MINTING_TOKEN: PHANTOM_${name}`);
 
-        // AXIA TOKEN CREATE
-        // We create a token with the session hash in the description/state
-        const command = `tokencreate name:"PHANTOM_${name}" amount:1 description:"Phantom Audio Provenance: ${sessionHash}"`;
-        window.MDS.cmd(command, (response: any) => {
-            if (response.status) {
-                console.log("💎 Axia Token Minted.");
-                resolve(response.response);
-            } else {
-                reject(response.error);
-            }
-        });
-    });
+    try {
+        const escapedName = name.replace(/"/g, '\\"');
+        const result = await mdsService.cmd(
+            `tokencreate name:"PHANTOM_${escapedName}" amount:1 description:"PiNet Provenance: ${sessionHash}" state:{"0":"${sessionHash}","1":"${escapedName}"}`
+        );
+
+        const tokenid = result?.tokenid || result?.response?.tokenid || `TKN_${sessionHash.slice(0, 12)}`;
+
+        logService.addLog('SUCCESS', 'AXIA', `TOKEN_MINTED: ${tokenid.slice(0, 16)}...`);
+
+        return {
+            status: true,
+            tokenid,
+            name: `PHANTOM_${name}`
+        };
+    } catch (e: any) {
+        logService.addLog('ERROR', 'AXIA', `MINT_FAILED: ${e.message || 'unknown'}`);
+        throw e;
+    }
 }

@@ -1,7 +1,19 @@
 {
-  "name": "PHANTOM | AI-Native Tactical Audio Workstation",
-  "description": "A decentralized, AI-augmented drum machine and synthesizer running on the PiNet_Os Kernel. Features real-time neural pattern generation, FM RDS broadcasting (GPIO 4), Hailo-8L NPU AI acceleration, and Docker-ready deployment for Raspbian.",
+  "name": "PHANTOM | PiNet DApp — AI-Native Tactical Audio Workstation",
+  "description": "A decentralized PiNet DApp built on the Minima blockchain. Features on-chain pattern provenance via Omnia state anchoring, Axia NFT tokenization, Maxima P2P mesh sync, real-time neural pattern generation with Gemini AI, Web Audio synthesis, and MIDI hardware integration. Runs on Raspberry Pi 5 with PiNet_Os Kernel v2.",
   "requestFramePermissions": [
     "microphone"
-  ]
+  ],
+  "dapp": {
+    "version": "2.0.0",
+    "protocol": "MINIMA_OMNIA",
+    "chain": "MINIMA_L1",
+    "features": [
+      "on-chain-provenance",
+      "axia-tokenization",
+      "maxima-p2p",
+      "pattern-store",
+      "mds-bridge"
+    ]
+  }
 }

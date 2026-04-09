@@ -117,12 +117,60 @@ export interface HiveState {
   latency: number; // ms
 }
 
+// --- PiNet DApp Types ---
+
+export type MDSConnectionState = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR';
+
+export interface MDSEvent {
+  event: string;
+  data?: any;
+}
+
+export interface MinimaBalance {
+  token: string;
+  tokenid: string;
+  confirmed: string;
+  unconfirmed: string;
+  sendable: string;
+  total: string;
+}
+
+export interface MaximaPeer {
+  publickey: string;
+  currentaddress: string;
+  name: string;
+  extradata?: string;
+  lastSeen: number;
+}
+
+export interface OnChainPattern {
+  tokenId: string;
+  name: string;
+  hash: string;
+  blockHeight: number;
+  timestamp: number;
+  creator: string;
+}
+
+export interface DAppState {
+  mdsConnected: MDSConnectionState;
+  blockHeight: number;
+  nodeAddress: string;
+  publicKey: string;
+  onChainPatterns: OnChainPattern[];
+  maximaPeers: MaximaPeer[];
+  balance: MinimaBalance[];
+}
+
 declare global {
   interface Window {
     MDS: {
       cmd: (command: string, callback: (resp: any) => void) => void;
       init: (callback: (msg: any) => void) => void;
       log: (msg: string) => void;
+      sql: (query: string, callback: (resp: any) => void) => void;
+      notify: (message: string) => void;
+      dapplink: (dappUrl: string, callback: (resp: any) => void) => void;
     };
   }
 }

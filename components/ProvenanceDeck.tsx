@@ -1,6 +1,8 @@
 
-import React from 'react';
-import { ProvenanceRecord } from '../types';
+import React, { useState, useEffect } from 'react';
+import { ProvenanceRecord, OnChainPattern } from '../types';
+import { getStoredPatterns } from '../services/patternStore';
+import { mdsService } from '../services/mdsService';
 
 interface ProvenanceDeckProps {
     record: ProvenanceRecord | null;
@@ -8,11 +10,31 @@ interface ProvenanceDeckProps {
 }
 
 const ProvenanceDeck: React.FC<ProvenanceDeckProps> = ({ record, token }) => {
+    const [storedPatterns, setStoredPatterns] = useState<OnChainPattern[]>([]);
+    const [isSimulated, setIsSimulated] = useState(true);
+
+    useEffect(() => {
+        setIsSimulated(mdsService.isSimulated);
+        // Fetch stored patterns from MDS database
+        getStoredPatterns().then(setStoredPatterns);
+
+        // Refresh when new blocks arrive
+        const unsub = mdsService.on('NEWBLOCK', () => {
+            getStoredPatterns().then(setStoredPatterns);
+        });
+        return () => { unsub(); };
+    }, [record, token]);
+
     return (
         <div className="glass-panel p-6 bg-black border border-gray-800 font-mono">
             <div className="flex justify-between border-b border-gray-800 pb-2 mb-4">
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">BLOCKCHAIN_PROVENANCE</h3>
-                <span className="text-[9px] text-accent">MINIMA_PROTOCOL</span>
+                <div className="flex items-center gap-2">
+                    {isSimulated && (
+                        <span className="text-[7px] bg-yellow-900/30 text-yellow-500 border border-yellow-800/50 px-1 py-0.5 rounded-sm">SIM</span>
+                    )}
+                    <span className="text-[9px] text-accent">MINIMA_PINET</span>
+                </div>
             </div>
 
             <div className="space-y-6">
@@ -30,7 +52,7 @@ const ProvenanceDeck: React.FC<ProvenanceDeckProps> = ({ record, token }) => {
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-[8px] text-gray-600 uppercase">Block_Height</span>
-                                <span className="text-[9px] text-gray-300">{record.blockHeight}</span>
+                                <span className="text-[9px] text-gray-300">{record.blockHeight.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-[8px] text-gray-600 uppercase">TX_ID</span>
@@ -67,12 +89,36 @@ const ProvenanceDeck: React.FC<ProvenanceDeckProps> = ({ record, token }) => {
                         <div className="text-[9px] text-gray-600 italic">NO_TOKEN_MINTED</div>
                     )}
                 </div>
+
+                {/* ON-CHAIN PATTERN HISTORY */}
+                {storedPatterns.length > 0 && (
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                            <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">PATTERN_LEDGER</span>
+                            <span className="text-[8px] text-gray-600">({storedPatterns.length})</span>
+                        </div>
+                        <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
+                            {storedPatterns.slice(0, 10).map((p, i) => (
+                                <div key={i} className="flex justify-between items-center bg-gray-900/30 px-2 py-1.5 border border-gray-800/50">
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] text-blue-300 font-bold">{p.name}</span>
+                                        <span className="text-[7px] text-gray-600">{p.hash.slice(0, 16)}...</span>
+                                    </div>
+                                    <span className="text-[8px] text-gray-500">
+                                        BLK {p.blockHeight.toLocaleString()}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="mt-6 pt-4 border-t border-gray-800">
                 <p className="text-[8px] text-gray-600 leading-relaxed">
-                    PHANTOM uses Minima's Omnia protocol for immutable state anchoring and Axia for unique asset tokenization. 
-                    Every pattern generated is cryptographically linked to your node's identity.
+                    PiNet DApp uses Minima's Omnia protocol for immutable state anchoring and Axia for unique asset tokenization. 
+                    Patterns are stored on-chain with SHA-256 integrity proofs. Peer sync via Maxima P2P mesh.
                 </p>
             </div>
         </div>

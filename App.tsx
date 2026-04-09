@@ -17,6 +17,7 @@ import ExportInterface from './components/ExportInterface';
 import PerformancePad from './components/PerformancePad';
 import MixerConsole from './components/MixerConsole';
 import SplashScreen from './components/SplashScreen';
+import DAppStatus from './components/DAppStatus';
 import { INITIAL_STATE, INSTRUMENT_SETTINGS } from './constants';
 import { SequencerState, ProvenanceRecord, InstrumentType, Track, TelemetryData, Pattern } from './types';
 import { shadowCore } from './services/audio/ShadowCore';
@@ -24,6 +25,10 @@ import { anchorSpirit, captureSpiritHash, mintAxiaToken } from './services/spiri
 import { phantomProtocol } from './services/phantomProtocol';
 import { clusterService } from './services/clusterService';
 import { radioService } from './services/radioService';
+import { mdsService } from './services/mdsService';
+import { maximaService } from './services/maximaService';
+import { telemetryService } from './services/telemetryService';
+import { storePatternOnChain } from './services/patternStore';
 
 import { 
   Activity, 
@@ -89,19 +94,28 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!bootComplete) return;
 
+    // Initialize PiNet DApp services
+    mdsService.init();
+    maximaService.init();
     clusterService.connect(); 
     
     // Subscribe to logs
     const unsubscribeLogs = logService.subscribe(setSystemLogs);
 
     const interval = setInterval(async () => {
-        setTelemetry(prev => ({
-            // Safe Mode: Cap temp at 70 to prevent accidental Panic Trigger (80C)
-            cpuTemp: Math.min(70, Math.max(35, prev.cpuTemp + (Math.random() - 0.5) * 3)),
-            npuLoad: Math.min(100, Math.max(0, prev.npuLoad + (Math.random() - 0.5) * 10)),
-            pcieLaneUsage: Math.min(100, Math.max(10, prev.pcieLaneUsage + (Math.random() - 0.5) * 2)),
-            memoryUsage: prev.memoryUsage
-        }));
+        // Use telemetry service for real browser metrics
+        try {
+            const realTelemetry = await telemetryService.collect();
+            setTelemetry(realTelemetry);
+        } catch (e) {
+            // Fallback to bounded random walk if telemetry service fails
+            setTelemetry(prev => ({
+                cpuTemp: Math.min(70, Math.max(35, prev.cpuTemp + (Math.random() - 0.5) * 3)),
+                npuLoad: Math.min(100, Math.max(0, prev.npuLoad + (Math.random() - 0.5) * 10)),
+                pcieLaneUsage: Math.min(100, Math.max(10, prev.pcieLaneUsage + (Math.random() - 0.5) * 2)),
+                memoryUsage: prev.memoryUsage
+            }));
+        }
 
         setTunerData(prev => ({
             rssi: Math.min(100, Math.max(10, prev.rssi + (Math.random() * 10 - 5))),
@@ -410,6 +424,18 @@ const App: React.FC = () => {
     }
   };
 
+  const handleStoreOnChain = async () => {
+    if (isKillSwitchActive) return;
+    const patternName = state.patterns[state.activePatternId]?.name || "UNNAMED";
+    try {
+      const result = await storePatternOnChain(patternName, state);
+      logService.addLog('SUCCESS', 'PINET', `PATTERN_STORED: ${result.name} [${result.hash.slice(0, 12)}...]`);
+    } catch (e) {
+      console.error("On-chain store failed", e);
+      logService.addLog('ERROR', 'PINET', 'ON_CHAIN_STORE_FAILED');
+    }
+  };
+
   const handleSessionImport = (newState: any) => {
       if (newState && newState.tracks && newState.bpm) {
           setState(prev => ({
@@ -531,7 +557,7 @@ const App: React.FC = () => {
               </div>
               <div className="flex flex-col">
                   <span className="text-[8px] text-gray-600 font-bold uppercase tracking-wide">Kernel</span>
-                  <span className="text-[10px] text-gray-300">{systemStatus.kernel || 'PiNet_Os'}</span>
+                  <span className="text-[10px] text-gray-300">{systemStatus.kernel || 'PiNet_Os'} {mdsService.isSimulated ? '[SIM]' : '[CHAIN]'}</span>
               </div>
               <div className="flex flex-col">
                   <span className="text-[8px] text-gray-600 font-bold uppercase tracking-wide">DSP Clock</span>
@@ -583,6 +609,15 @@ const App: React.FC = () => {
               title="Mint Provenance Token on Minima Axia"
             >
               {isMinting ? <span className="animate-spin text-[10px]">⟳</span> : axiaToken ? '💎 AXIA_MINTED' : 'AXIA_MINT'}
+            </button>
+
+            <button
+              onClick={handleStoreOnChain}
+              disabled={isKillSwitchActive}
+              className="h-7 sm:h-8 px-2 sm:px-4 font-bold text-[8px] sm:text-[10px] tracking-wide border transition-all flex items-center gap-1 sm:gap-2 rounded-sm bg-black border-blue-600/50 text-blue-400 hover:border-blue-400 hover:bg-blue-900/10"
+              title="Store pattern on PiNet blockchain"
+            >
+              📦 STORE_ON_CHAIN
             </button>
             
             <button 
@@ -809,11 +844,13 @@ const App: React.FC = () => {
         {activeTab === Tab.NETWORK && (
             <div className="h-full max-w-6xl mx-auto p-8 grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in">
                 <div className="space-y-8">
+                    <DAppStatus />
                     <ClusterMonitor />
                     <TelemetryDeck data={telemetry} />
-                    <ProvenanceDeck record={provenance} token={axiaToken} />
                 </div>
                 <div className="flex flex-col gap-8">
+                    <ProvenanceDeck record={provenance} token={axiaToken} />
+
                     {/* SYSTEM AVAILABILITY */}
                     <div className="glass-panel p-6 bg-black border-gray-800">
                         <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Component Status</h3>
@@ -827,8 +864,8 @@ const App: React.FC = () => {
                                 <div className={`w-2 h-2 rounded-full ${systemStatus.hailo ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500'}`}></div>
                             </div>
                             <div className="flex items-center justify-between p-3 bg-gray-900/50 border border-gray-800 rounded">
-                                <span className="text-[10px] font-bold">MINIMA_NODE</span>
-                                <div className={`w-2 h-2 rounded-full ${systemStatus.minima ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500'}`}></div>
+                                <span className="text-[10px] font-bold">MDS_BRIDGE</span>
+                                <div className={`w-2 h-2 rounded-full ${mdsService.connectionState === 'CONNECTED' ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500'}`}></div>
                             </div>
                             <div className="flex items-center justify-between p-3 bg-gray-900/50 border border-gray-800 rounded">
                                 <span className="text-[10px] font-bold">PI_FM_RDS</span>
@@ -865,7 +902,12 @@ const App: React.FC = () => {
 
       {/* FOOTER STATUS BAR */}
       <footer className="fixed bottom-0 w-full h-6 bg-black border-t border-gray-800 flex items-center justify-between px-4 text-[9px] text-gray-600 font-mono z-50">
-          <div>INFINITY COLLABORATIONS SDH © 2024</div>
+          <div className="flex gap-3">
+              <span>PINET_DAPP</span>
+              <span className={mdsService.connectionState === 'CONNECTED' ? 'text-accent' : 'text-red-900'}>
+                  {mdsService.isSimulated ? 'SIM' : 'CHAIN'}:BLK_{mdsService.blockHeight}
+              </span>
+          </div>
           <div className="flex gap-4">
               <span>MEM: {Math.round(telemetry.memoryUsage)}%</span>
               <span>CPU: {Math.round(telemetry.cpuTemp)}°C</span>
