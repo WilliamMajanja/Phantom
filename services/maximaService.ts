@@ -243,7 +243,7 @@ class MaximaService {
         const cleanHex = hex.startsWith('0x') ? hex.slice(2) : hex;
         const bytes = new Uint8Array(cleanHex.length / 2);
         for (let i = 0; i < bytes.length; i++) {
-            bytes[i] = parseInt(cleanHex.substr(i * 2, 2), 16);
+            bytes[i] = parseInt(cleanHex.substring(i * 2, i * 2 + 2), 16);
         }
         return new TextDecoder().decode(bytes);
     }
