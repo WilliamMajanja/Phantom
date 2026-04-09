@@ -4,6 +4,7 @@ import { mdsService } from '../services/mdsService';
 import { maximaService } from '../services/maximaService';
 import { getPatternCount } from '../services/patternStore';
 import { MDSConnectionState, MaximaPeer } from '../types';
+import { truncateHex } from '../services/utils';
 
 const DAppStatus: React.FC = () => {
     const [connectionState, setConnectionState] = useState<MDSConnectionState>('DISCONNECTED');
@@ -140,9 +141,9 @@ const DAppStatus: React.FC = () => {
                                 <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
                                 <span className="text-[9px] text-blue-300 font-mono">{peer.name}</span>
                             </div>
-                            <span className="text-[7px] text-gray-600 font-mono">
-                                {peer.publickey.slice(0, 12)}...
-                            </span>
+                                <span className="text-[7px] text-gray-600 font-mono">
+                                    {truncateHex(peer.publickey)}
+                                </span>
                         </div>
                     ))}
                     {peers.length > 5 && (

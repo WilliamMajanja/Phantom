@@ -65,7 +65,7 @@ class TelemetryService {
     /**
      * Estimate CPU temperature.
      * Real temp comes from the server endpoint on Pi hardware.
-     * In browser-only mode, we estimate from thread utilization.
+     * In browser-only mode, we estimate from recent performance entries.
      */
     private async estimateCPUTemp(): Promise<number> {
         // Try to get from server (Pi hardware)
@@ -81,15 +81,13 @@ class TelemetryService {
             // Server not available
         }
 
-        // Estimate from browser task density
-        const start = performance.now();
-        let iterations = 0;
-        while (performance.now() - start < 2) {
-            iterations++;
-        }
-        // Higher iterations = less load = cooler
-        // Typical range: 500-5000 iterations in 2ms
-        const loadFactor = Math.max(0, 1 - (iterations / 3000));
+        // Estimate from browser task density using non-blocking long task observer
+        const longTasks = performance.getEntriesByType('longtask') as any[];
+        const recentTasks = longTasks.filter(
+            t => t.startTime > performance.now() - 10000
+        );
+        // More long tasks = higher load = warmer CPU
+        const loadFactor = Math.min(1, recentTasks.length / 10);
         return 40 + loadFactor * 30; // Range: 40-70°C estimate
     }
 

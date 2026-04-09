@@ -2,6 +2,7 @@
 import { SequencerState, OnChainPattern } from '../types';
 import { mdsService } from './mdsService';
 import { logService } from './logService';
+import { escapeSql, escapeCmd } from './utils';
 
 /**
  * Pattern Store — On-Chain Pattern Storage via Minima
@@ -53,7 +54,7 @@ export async function storePatternOnChain(
 
     try {
         // 1. Create on-chain token
-        const escapedName = name.replace(/"/g, '\\"');
+        const escapedName = escapeCmd(name);
         const tokenResult = await mdsService.cmd(
             `tokencreate name:"PHANTOM_${escapedName}" amount:1 description:"PiNet_Pattern:${hash}" state:{"0":"${hash}","1":"${escapedName}","2":"${timestamp}"}`
         );
@@ -74,8 +75,8 @@ export async function storePatternOnChain(
         tracks: state.tracks
     });
 
-    const escapedData = patternData.replace(/'/g, "''");
-    const escapedStoreName = name.replace(/'/g, "''");
+    const escapedData = escapeSql(patternData);
+    const escapedStoreName = escapeSql(name);
 
     try {
         await mdsService.sql(
@@ -171,7 +172,7 @@ export async function getPatternCount(): Promise<number> {
  */
 export async function loadPatternData(hash: string): Promise<any | null> {
     try {
-        const escapedHash = hash.replace(/'/g, "''");
+        const escapedHash = escapeSql(hash);
         const result = await mdsService.sql(
             `SELECT pattern_data FROM phantom_patterns WHERE hash='${escapedHash}' LIMIT 1`
         );

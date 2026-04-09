@@ -557,7 +557,7 @@ const App: React.FC = () => {
               </div>
               <div className="flex flex-col">
                   <span className="text-[8px] text-gray-600 font-bold uppercase tracking-wide">Kernel</span>
-                  <span className="text-[10px] text-gray-300">{systemStatus.kernel || 'PiNet_Os'} {mdsService.isSimulated ? '[SIM]' : '[CHAIN]'}</span>
+                  <span className="text-[10px] text-gray-300">{systemStatus.kernel || 'PiNet_Os'} {mdsService.isSimulated ? ' [SIM]' : ' [CHAIN]'}</span>
               </div>
               <div className="flex flex-col">
                   <span className="text-[8px] text-gray-600 font-bold uppercase tracking-wide">DSP Clock</span>

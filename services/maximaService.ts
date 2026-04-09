@@ -2,6 +2,7 @@
 import { MaximaPeer } from '../types';
 import { mdsService } from './mdsService';
 import { logService } from './logService';
+import { escapeSql } from './utils';
 
 /**
  * Maxima Service — Peer-to-Peer Messaging via Minima's Maxima Layer
@@ -139,9 +140,10 @@ class MaximaService {
             // Also update the local DB
             for (const peer of this.peers) {
                 try {
-                    const escapedName = (peer.name || '').replace(/'/g, "''");
+                    const escapedName = escapeSql(peer.name || '');
+                    const escapedKey = escapeSql(peer.publickey);
                     await mdsService.sql(
-                        `INSERT OR REPLACE INTO phantom_peers (public_key, name, last_seen) VALUES ('${peer.publickey}', '${escapedName}', ${Date.now()})`
+                        `INSERT OR REPLACE INTO phantom_peers (public_key, name, last_seen) VALUES ('${escapedKey}', '${escapedName}', ${Date.now()})`
                     );
                 } catch (e) {
                     // Non-critical

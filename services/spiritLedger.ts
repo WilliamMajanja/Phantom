@@ -2,6 +2,7 @@
 import { ProvenanceRecord, SequencerState } from '../types';
 import { mdsService } from './mdsService';
 import { logService } from './logService';
+import { escapeCmd } from './utils';
 
 // SPIRIT LEDGER
 // Hashes the soul of the machine (Session State) to the Minima Blockchain
@@ -65,7 +66,7 @@ export async function mintAxiaToken(name: string, sessionHash: string): Promise<
     logService.addLog('INFO', 'AXIA', `MINTING_TOKEN: PHANTOM_${name}`);
 
     try {
-        const escapedName = name.replace(/"/g, '\\"');
+        const escapedName = escapeCmd(name);
         const result = await mdsService.cmd(
             `tokencreate name:"PHANTOM_${escapedName}" amount:1 description:"PiNet Provenance: ${sessionHash}" state:{"0":"${sessionHash}","1":"${escapedName}"}`
         );
