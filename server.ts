@@ -287,7 +287,11 @@ async function startServer() {
   } else {
     app.use(express.static(path.join(__dirname, "dist")));
     app.use(spaFallbackLimiter, (req, res, next) => {
-      if (req.method !== "GET" && req.method !== "HEAD") {
+      if (
+        (req.method !== "GET" && req.method !== "HEAD") ||
+        req.path.startsWith("/api/") ||
+        path.extname(req.path)
+      ) {
         next();
         return;
       }

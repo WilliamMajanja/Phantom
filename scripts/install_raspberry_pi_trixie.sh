@@ -60,7 +60,8 @@ for group in audio video input render gpio spi i2c; do
   fi
 done
 
-mkdir -p "${APP_DIR}" "${ENV_DIR}"
+mkdir -p "${APP_DIR}"
+install -d -m 0750 -o root -g "${APP_GROUP}" "${ENV_DIR}"
 rsync -a --delete \
   --exclude ".git" \
   --exclude "node_modules" \
@@ -72,6 +73,7 @@ chown -R "${APP_USER}:${APP_GROUP}" "${APP_DIR}"
 cd "${APP_DIR}"
 runuser -u "${APP_USER}" -- npm ci
 runuser -u "${APP_USER}" -- npm run build
+# Build uses dev dependencies; prune afterwards leaves only production runtime dependencies.
 runuser -u "${APP_USER}" -- npm prune --omit=dev
 
 if [[ ! -f "${ENV_FILE}" ]]; then
@@ -83,11 +85,12 @@ APP_URL=http://localhost:3000
 GEMINI_API_KEY=
 EOF
 fi
+chown root:"${APP_GROUP}" "${ENV_FILE}"
+chmod 0640 "${ENV_FILE}"
 
 install -m 0644 "${APP_DIR}/scripts/systemd/phantom.service" /etc/systemd/system/phantom.service
 install -m 0755 "${APP_DIR}/scripts/phantom-kiosk.sh" /usr/local/bin/phantom-kiosk
 install -m 0644 "${APP_DIR}/scripts/desktop/phantom.desktop" /usr/share/applications/phantom.desktop
-chown -R "${APP_USER}:${APP_GROUP}" "${ENV_DIR}"
 
 systemctl daemon-reload
 systemctl enable phantom.service
