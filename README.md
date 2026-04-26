@@ -60,6 +60,22 @@ npm run dev
 ```
 > **Access Point:** `http://localhost:3000`
 
+### 🍓 Raspberry Pi OS Trixie Application Mode
+PHANTOM can be installed as a production Raspberry Pi OS Trixie application with a systemd service and Chromium kiosk launcher:
+
+```bash
+npm run raspi:install
+```
+
+The installer copies the app to `/opt/phantom`, builds the production frontend, writes `/etc/systemd/system/phantom.service`, and installs a desktop launcher. Configure runtime values in `/etc/phantom/phantom.env`, then manage the app with:
+
+```bash
+sudo systemctl status phantom.service
+sudo systemctl restart phantom.service
+```
+
+The app binds to `0.0.0.0:3000` by default so it can be opened locally on the Pi or from another device on the same network.
+
 ### 🟣 Minima MiniDAPP
 PHANTOM now ships with `minidapp.conf` for MiniHub packaging. Build the frontend with `npm run build`, include the generated `dist/` assets with `minidapp.conf`, and run the app inside Minima MDS so `window.MDS` is available. Provenance actions fail closed when MDS is unavailable instead of creating simulated transaction IDs.
 

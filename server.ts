@@ -1,7 +1,6 @@
 import express from "express";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
@@ -73,7 +72,8 @@ async function startServer() {
   // WebSocket Server attached to the same HTTP server
   const wss = new WebSocketServer({ server });
 
-  const PORT = 3000;
+  const PORT = Number.parseInt(process.env.PORT || "3000", 10);
+  const HOST = process.env.HOST || "0.0.0.0";
 
   // Middleware
   app.use(cors());
@@ -271,6 +271,7 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -283,7 +284,7 @@ async function startServer() {
     });
   }
 
-  server.listen(PORT, "0.0.0.0", () => {
+  server.listen(PORT, HOST, () => {
     console.log(`
 ██████╗ ██╗  ██╗ █████╗ ███╗   ██╗████████╗ ██████╗ ███╗   ███╗
 ██╔══██╗██║  ██║██╔══██╗████╗  ██║╚══██╔══╝██╔═══██╗████╗ ████║
@@ -292,7 +293,7 @@ async function startServer() {
 ██║     ██║  ██║██║  ██║██║ ╚████║   ██║   ╚██████╔╝██║ ╚═╝ ██║
 ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚═╝     ╚═╝
                                                                
-PHANTOM CORE SERVER ACTIVE AT http://localhost:${PORT}
+PHANTOM CORE SERVER ACTIVE AT http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}
 NODE_ENV: ${process.env.NODE_ENV || 'development'}
     `);
   });

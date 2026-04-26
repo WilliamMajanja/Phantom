@@ -9,6 +9,9 @@
 
 export PHANTOM_HOME="/opt/phantom"
 export XDG_RUNTIME_DIR="/run/user/0" # If running as root
+export NODE_ENV="${NODE_ENV:-production}"
+export HOST="${HOST:-0.0.0.0}"
+export PORT="${PORT:-3000}"
 
 echo "👻 PHANTOM OS STARTING..."
 
@@ -39,13 +42,12 @@ python3 $PHANTOM_HOME/scripts/prism_engine.py &
 
 # 3. START UI SERVER
 cd $PHANTOM_HOME
-# In production, use 'serve -s build', but npm start works for prototype
-npm start &
+npm run start &
 
 # 4. WAIT FOR LOCALHOST
 # Loop until the React app is serving
 echo "⏳ Waiting for UI Server..."
-until $(curl --output /dev/null --silent --head --fail http://localhost:3000); do
+until $(curl --output /dev/null --silent --head --fail http://localhost:${PORT}); do
     printf '.'
     sleep 1
 done

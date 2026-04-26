@@ -1,0 +1,22 @@
+[Unit]
+Description=PHANTOM Raspberry Pi Trixie Application
+Documentation=https://github.com/WilliamMajanja/Phantom
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=phantom
+Group=phantom
+WorkingDirectory=/opt/phantom
+EnvironmentFile=-/etc/phantom/phantom.env
+Environment=NODE_ENV=production
+Environment=HOST=0.0.0.0
+Environment=PORT=3000
+ExecStart=/usr/bin/npm run start
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
