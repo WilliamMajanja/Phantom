@@ -5,6 +5,7 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
+import createRateLimit from "express-rate-limit";
 import * as dotenv from "dotenv";
 import { execFile } from "child_process";
 import { promisify } from "util";
@@ -20,7 +21,7 @@ const PI_FM_RDS_PATH = path.join(__dirname, "pi_fm_rds");
 
 async function commandExists(command: string) {
   try {
-    await execFileAsync("which", [command]);
+    await execFileAsync(process.platform === "win32" ? "where" : "which", [command]);
     return true;
   } catch {
     return false;
@@ -51,29 +52,19 @@ async function isHttpOk(url: string) {
   return !!response?.ok;
 }
 
-const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+const ghostSummonLimiter = createRateLimit({
+  windowMs: 60_000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
-function rateLimit(scope: string, maxRequests: number, windowMs: number) {
-  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const now = Date.now();
-    const key = `${scope}:${req.ip}`;
-    const bucket = rateBuckets.get(key);
-
-    if (!bucket || bucket.resetAt <= now) {
-      rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
-      next();
-      return;
-    }
-
-    if (bucket.count >= maxRequests) {
-      res.status(429).json({ success: false, error: "RATE_LIMITED" });
-      return;
-    }
-
-    bucket.count += 1;
-    next();
-  };
-}
+const systemStatusLimiter = createRateLimit({
+  windowMs: 60_000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 async function startServer() {
   const app = express();
@@ -111,7 +102,7 @@ async function startServer() {
   });
 
   // Ghost AI Summoning (Local Ollama)
-  app.post("/api/ghost/summon", rateLimit("ghost-summon", 10, 60_000), async (req, res) => {
+  app.post("/api/ghost/summon", ghostSummonLimiter, async (req, res) => {
     const { prompt, mood, bpm } = req.body;
     console.log(`[GHOST] Summoning pattern for: "${prompt || mood}" at ${bpm} BPM`);
     
@@ -144,10 +135,10 @@ async function startServer() {
     console.log(`[RADIO] Updating RDS: "${text}" on ${freq}MHz`);
     
     try {
-      const rdsText = String(text || "").trim().slice(0, 64);
+      const rdsText = String(text || "").trim();
       const frequency = Number(freq);
 
-      if (!rdsText || !Number.isFinite(frequency) || frequency < 76 || frequency > 108) {
+      if (!rdsText || rdsText.length > 64 || !Number.isFinite(frequency) || frequency < 76 || frequency > 108) {
         res.status(400).json({ success: false, error: "INVALID_RDS_REQUEST" });
         return;
       }
@@ -163,7 +154,7 @@ async function startServer() {
 
       res.json({ 
         success: true, 
-        message: `RDS_READY: ${rdsText}`,
+        message: `RDS_RADIOTEXT_READY: ${rdsText}`,
         frequency,
         timestamp: new Date().toISOString()
       });
@@ -173,7 +164,7 @@ async function startServer() {
   });
 
   // System Status (Component Availability)
-  app.get("/api/system/status", rateLimit("system-status", 30, 60_000), async (req, res) => {
+  app.get("/api/system/status", systemStatusLimiter, async (req, res) => {
     const status: any = {
       ollama: false,
       hailo: false,

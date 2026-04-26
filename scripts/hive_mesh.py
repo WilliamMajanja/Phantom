@@ -12,8 +12,6 @@ try:
 except (ImportError, RuntimeError) as exc:
     print(f"❌ LoRa Hardware (SPI/GPIO) not found: {exc}")
     HAS_LORA = False
-    spidev = None
-    GPIO = None
 
 
 # HIVE MESH v1.1

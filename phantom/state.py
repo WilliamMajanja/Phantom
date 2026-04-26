@@ -3,7 +3,7 @@ import reflex as rx
 import asyncio
 import time
 import json
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 class Message(rx.Base):
     role: str
@@ -25,9 +25,9 @@ class State(rx.State):
     active_tab: str = "SEQUENCER"
     
     # Telemetry
-    cpu_temp: float = 45.0
-    npu_load: float = 12.0
-    memory_usage: float = 3.2
+    cpu_temp: Optional[float] = None
+    npu_load: Optional[float] = None
+    memory_usage: Optional[float] = None
     
     # Ghost Bridge (AI Assistant)
     chat_history: List[Message] = [
@@ -97,10 +97,10 @@ class State(rx.State):
                         self.cpu_temp = round(cpu.current, 1)
                     self.memory_usage = round(psutil.virtual_memory().used / (1024 ** 3), 1)
                 except Exception:
-                    self.cpu_temp = 0
-                    self.memory_usage = 0
+                    self.cpu_temp = None
+                    self.memory_usage = None
 
                 # The Reflex control surface has no direct Hailo telemetry channel; the
                 # TypeScript backend exposes hardware availability via /api/system/status.
-                self.npu_load = 0
+                self.npu_load = None
             await asyncio.sleep(2)

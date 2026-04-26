@@ -31,7 +31,7 @@ export function anchorSpirit(sessionHash: string): Promise<ProvenanceRecord> {
         }
 
         if (!/^[a-f0-9]{64}$/i.test(sessionHash)) {
-            reject(new Error("INVALID_SPIRIT_HASH"));
+            reject(new Error("INVALID_SESSION_HASH"));
             return;
         }
 
