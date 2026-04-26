@@ -13,7 +13,7 @@ EnvironmentFile=-/etc/phantom/phantom.env
 Environment=NODE_ENV=production
 Environment=HOST=0.0.0.0
 Environment=PORT=3000
-ExecStart=/usr/bin/node --import tsx server.ts
+ExecStart=/usr/bin/node --import /opt/phantom/node_modules/tsx/dist/esm/index.mjs server.ts
 Restart=on-failure
 RestartSec=5
 NoNewPrivileges=true

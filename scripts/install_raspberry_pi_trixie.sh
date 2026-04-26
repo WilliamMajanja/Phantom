@@ -17,6 +17,7 @@ if [[ -r /etc/os-release ]]; then
   # shellcheck disable=SC1091
   source /etc/os-release
   if [[ "${VERSION_CODENAME:-}" != "trixie" ]]; then
+    # Continue after warning so advanced users can test compatible Raspberry Pi OS derivatives.
     echo "Warning: this installer targets Raspberry Pi OS Trixie; detected '${VERSION_CODENAME:-unknown}'."
   fi
 fi
@@ -73,7 +74,7 @@ chown -R "${APP_USER}:${APP_GROUP}" "${APP_DIR}"
 cd "${APP_DIR}"
 runuser -u "${APP_USER}" -- npm ci
 runuser -u "${APP_USER}" -- npm run build
-# Build uses dev dependencies; prune afterwards leaves only production runtime dependencies.
+# Build uses dev dependencies; prune afterwards keeps production runtime dependencies, including tsx.
 runuser -u "${APP_USER}" -- npm prune --omit=dev
 
 if [[ ! -f "${ENV_FILE}" ]]; then
