@@ -65,6 +65,13 @@ const systemStatusLimiter = createRateLimit({
   legacyHeaders: false
 });
 
+const spaFallbackLimiter = createRateLimit({
+  windowMs: 60_000,
+  limit: 120,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 async function startServer() {
   const app = express();
   const server = createServer(app);
@@ -279,7 +286,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     app.use(express.static(path.join(__dirname, "dist")));
-    app.get("/{*splat}", (req, res) => {
+    app.get("/{*splat}", spaFallbackLimiter, (req, res) => {
       res.sendFile(path.join(__dirname, "dist", "index.html"));
     });
   }
