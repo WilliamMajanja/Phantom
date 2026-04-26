@@ -74,8 +74,6 @@ chown -R "${APP_USER}:${APP_GROUP}" "${APP_DIR}"
 cd "${APP_DIR}"
 runuser -u "${APP_USER}" -- npm ci
 runuser -u "${APP_USER}" -- npm run build
-# Build uses dev dependencies; prune afterwards keeps production runtime dependencies, including tsx.
-runuser -u "${APP_USER}" -- npm prune --omit=dev
 
 if [[ ! -f "${ENV_FILE}" ]]; then
   cat > "${ENV_FILE}" <<EOF

@@ -65,7 +65,7 @@ const systemStatusLimiter = createRateLimit({
   legacyHeaders: false
 });
 
-const productionFallbackLimiter = createRateLimit({
+const productionStaticLimiter = createRateLimit({
   windowMs: 60_000,
   limit: 120,
   standardHeaders: true,
@@ -285,8 +285,9 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
+    app.use(productionStaticLimiter);
     app.use(express.static(path.join(__dirname, "dist")));
-    app.use(productionFallbackLimiter, (req, res, next) => {
+    app.use((req, res, next) => {
       if (
         (req.method !== "GET" && req.method !== "HEAD") ||
         req.path.startsWith("/api/") ||
