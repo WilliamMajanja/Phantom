@@ -26,17 +26,12 @@ export async function captureSpiritHash(
 export function anchorSpirit(sessionHash: string): Promise<ProvenanceRecord> {
     return new Promise((resolve, reject) => {
         if (typeof window.MDS === 'undefined') {
-            console.warn("[Spirit Ledger] Minima Node Offline. Running in Specter Mode.");
-            setTimeout(() => {
-                const mockTxId = "0xSPIRIT_" + Array.from(crypto.getRandomValues(new Uint8Array(16)))
-                    .map(b => b.toString(16).padStart(2, '0')).join('');
-                resolve({
-                    hash: sessionHash,
-                    timestamp: Date.now(),
-                    blockHeight: 666000,
-                    signature: mockTxId
-                });
-            }, 1000);
+            reject(new Error("MINIMA_MDS_UNAVAILABLE: PHANTOM must run inside Minima MDS to anchor Omnia records."));
+            return;
+        }
+
+        if (!/^[a-f0-9]{64}$/i.test(sessionHash)) {
+            reject(new Error("INVALID_SPIRIT_HASH"));
             return;
         }
 
@@ -66,20 +61,19 @@ export function anchorSpirit(sessionHash: string): Promise<ProvenanceRecord> {
 export function mintAxiaToken(name: string, sessionHash: string): Promise<any> {
     return new Promise((resolve, reject) => {
         if (typeof window.MDS === 'undefined') {
-            console.warn("[Axia] Minima Node Offline. Simulating Token Creation.");
-            setTimeout(() => {
-                resolve({
-                    status: true,
-                    tokenid: "0xAXIA_" + Math.random().toString(36).substring(7),
-                    name: `PHANTOM_${name}`
-                });
-            }, 1500);
+            reject(new Error("MINIMA_MDS_UNAVAILABLE: PHANTOM must run inside Minima MDS to mint Axia tokens."));
+            return;
+        }
+
+        if (!/^[a-f0-9]{64}$/i.test(sessionHash)) {
+            reject(new Error("INVALID_SPIRIT_HASH"));
             return;
         }
 
         // AXIA TOKEN CREATE
         // We create a token with the session hash in the description/state
-        const command = `tokencreate name:"PHANTOM_${name}" amount:1 description:"Phantom Audio Provenance: ${sessionHash}"`;
+        const safeName = name.replace(/[^a-z0-9_-]/gi, '_').slice(0, 48) || 'UNNAMED';
+        const command = `tokencreate name:"PHANTOM_${safeName}" amount:1 description:"Phantom Audio Provenance: ${sessionHash}"`;
         window.MDS.cmd(command, (response: any) => {
             if (response.status) {
                 console.log("💎 Axia Token Minted.");
