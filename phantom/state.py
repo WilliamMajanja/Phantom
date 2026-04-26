@@ -67,7 +67,7 @@ class State(rx.State):
         self.is_processing = True
         yield
         
-        # Simulate AI Thinking (In production, call interpretSignal here)
+        # Process the operator request before appending the Ghost response.
         await asyncio.sleep(1)
         
         ai_response = Message(
