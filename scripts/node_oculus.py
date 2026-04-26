@@ -43,7 +43,7 @@ async def send_telemetry(websocket):
                   cpu_temp = psutil.sensors_temperatures()['cpu_thermal'][0].current
                   calibrated_temp = cpu_temp
             except:
-                  calibrated_temp = 0
+                  calibrated_temp = None
 
         telemetry = {
             "type": "TELEMETRY",

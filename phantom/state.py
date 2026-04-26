@@ -100,5 +100,7 @@ class State(rx.State):
                     self.cpu_temp = 0
                     self.memory_usage = 0
 
+                # The Reflex control surface has no direct Hailo telemetry channel; the
+                # TypeScript backend exposes hardware availability via /api/system/status.
                 self.npu_load = 0
             await asyncio.sleep(2)

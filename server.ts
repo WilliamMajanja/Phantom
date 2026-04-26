@@ -51,6 +51,30 @@ async function isHttpOk(url: string) {
   return !!response?.ok;
 }
 
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function rateLimit(scope: string, maxRequests: number, windowMs: number) {
+  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const now = Date.now();
+    const key = `${scope}:${req.ip}`;
+    const bucket = rateBuckets.get(key);
+
+    if (!bucket || bucket.resetAt <= now) {
+      rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+      next();
+      return;
+    }
+
+    if (bucket.count >= maxRequests) {
+      res.status(429).json({ success: false, error: "RATE_LIMITED" });
+      return;
+    }
+
+    bucket.count += 1;
+    next();
+  };
+}
+
 async function startServer() {
   const app = express();
   const server = createServer(app);
@@ -87,7 +111,7 @@ async function startServer() {
   });
 
   // Ghost AI Summoning (Local Ollama)
-  app.post("/api/ghost/summon", async (req, res) => {
+  app.post("/api/ghost/summon", rateLimit("ghost-summon", 10, 60_000), async (req, res) => {
     const { prompt, mood, bpm } = req.body;
     console.log(`[GHOST] Summoning pattern for: "${prompt || mood}" at ${bpm} BPM`);
     
@@ -149,7 +173,7 @@ async function startServer() {
   });
 
   // System Status (Component Availability)
-  app.get("/api/system/status", async (req, res) => {
+  app.get("/api/system/status", rateLimit("system-status", 30, 60_000), async (req, res) => {
     const status: any = {
       ollama: false,
       hailo: false,
