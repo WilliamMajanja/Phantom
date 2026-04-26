@@ -107,7 +107,7 @@ PHANTOM nodes communicate via a multi-layered protocol stack designed for reliab
 | Layer | Protocol | Function |
 | :--- | :--- | :--- |
 | **HIVE** | WebSocket / LoRa | Real-time voice-over-mesh and peer discovery. |
-| **RELAY** | Radio RF (Simulated) | Frequency-hopped text messenger and signal relay. |
+| **RELAY** | Radio RF / WebSocket | Frequency-hopped text messenger and signal relay. |
 | **PHANTOM** | Custom Binary | High-speed local cluster synchronization for audio sync. |
 
 ---

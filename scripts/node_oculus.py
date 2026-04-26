@@ -10,7 +10,6 @@ import psutil
 # Function: Visualizes sequencer state from the Nexus node.
 # ==========================================
 
-# Hardware Abstraction Layer for non-SenseHat devices
 try:
     from sense_hat import SenseHat
     sense = SenseHat()
@@ -18,16 +17,9 @@ try:
     HAS_HARDWARE = True
     print("✅ Sense HAT Hardware Detected")
 except ImportError:
-    print("⚠️  Sense HAT Not Found. Running in Simulation Mode.")
+    print("⚠️  Sense HAT Not Found. LED matrix output disabled.")
     HAS_HARDWARE = False
-    
-    class MockSenseHat:
-        def clear(self): pass
-        def set_pixels(self, p): pass
-        def show_letter(self, l, text_colour): pass
-        def get_temperature(self): return 45.0 # Mock Temp
-        
-    sense = MockSenseHat()
+    sense = None
 
 # Colors
 C_BG = [0, 0, 0]
@@ -39,19 +31,19 @@ C_PANIC = [255, 0, 0]
 async def send_telemetry(websocket):
     """Broadcasts temperature and humidity to the cluster."""
     while True:
-        # Get Temp
+        calibrated_temp = None
+
         if HAS_HARDWARE:
             temp = sense.get_temperature()
             cpu_temp = psutil.sensors_temperatures()['cpu_thermal'][0].current
             calibrated_temp = temp - ((cpu_temp - temp) / 1.5)
         else:
-            calibrated_temp = 42.0 # Constant mock
             try:
-                 # Try to get real CPU temp even without Hat
-                 cpu_temp = psutil.sensors_temperatures()['cpu_thermal'][0].current
-                 calibrated_temp = cpu_temp
+                  # Try to get real CPU temp even without Hat
+                  cpu_temp = psutil.sensors_temperatures()['cpu_thermal'][0].current
+                  calibrated_temp = cpu_temp
             except:
-                 pass
+                  calibrated_temp = 0
 
         telemetry = {
             "type": "TELEMETRY",

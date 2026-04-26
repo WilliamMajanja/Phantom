@@ -89,8 +89,16 @@ class State(rx.State):
     async def poll_telemetry(self):
         while True:
             async with self:
-                # Mock hardware polling
-                import random
-                self.cpu_temp = round(45.0 + random.uniform(-2, 2), 1)
-                self.npu_load = round(10.0 + random.uniform(0, 15), 1)
+                try:
+                    import psutil
+                    temps = psutil.sensors_temperatures()
+                    cpu = temps.get("cpu_thermal", [None])[0]
+                    if cpu:
+                        self.cpu_temp = round(cpu.current, 1)
+                    self.memory_usage = round(psutil.virtual_memory().used / (1024 ** 3), 1)
+                except Exception:
+                    self.cpu_temp = 0
+                    self.memory_usage = 0
+
+                self.npu_load = 0
             await asyncio.sleep(2)
