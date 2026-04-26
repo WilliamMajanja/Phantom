@@ -67,10 +67,12 @@ rsync -a --delete \
   --exclude "dist" \
   "${REPO_ROOT}/" "${APP_DIR}/"
 
+chown -R "${APP_USER}:${APP_GROUP}" "${APP_DIR}"
+
 cd "${APP_DIR}"
-npm ci
-npm run build
-npm prune --omit=dev
+runuser -u "${APP_USER}" -- npm ci
+runuser -u "${APP_USER}" -- npm run build
+runuser -u "${APP_USER}" -- npm prune --omit=dev
 
 if [[ ! -f "${ENV_FILE}" ]]; then
   cat > "${ENV_FILE}" <<EOF
@@ -85,7 +87,7 @@ fi
 install -m 0644 "${APP_DIR}/scripts/systemd/phantom.service" /etc/systemd/system/phantom.service
 install -m 0755 "${APP_DIR}/scripts/phantom-kiosk.sh" /usr/local/bin/phantom-kiosk
 install -m 0644 "${APP_DIR}/scripts/desktop/phantom.desktop" /usr/share/applications/phantom.desktop
-chown -R "${APP_USER}:${APP_GROUP}" "${APP_DIR}" "${ENV_DIR}"
+chown -R "${APP_USER}:${APP_GROUP}" "${ENV_DIR}"
 
 systemctl daemon-reload
 systemctl enable phantom.service

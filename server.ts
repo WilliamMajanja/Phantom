@@ -286,7 +286,12 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     app.use(express.static(path.join(__dirname, "dist")));
-    app.get("/{*splat}", spaFallbackLimiter, (req, res) => {
+    app.use(spaFallbackLimiter, (req, res, next) => {
+      if (req.method !== "GET" && req.method !== "HEAD") {
+        next();
+        return;
+      }
+
       res.sendFile(path.join(__dirname, "dist", "index.html"));
     });
   }
