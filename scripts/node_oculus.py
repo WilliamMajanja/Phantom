@@ -42,7 +42,7 @@ async def send_telemetry(websocket):
                   # Try to get real CPU temp even without Hat
                   cpu_temp = psutil.sensors_temperatures()['cpu_thermal'][0].current
                   calibrated_temp = cpu_temp
-            except:
+            except Exception:
                   calibrated_temp = None
 
         telemetry = {

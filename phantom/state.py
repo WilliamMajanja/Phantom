@@ -91,14 +91,21 @@ class State(rx.State):
             async with self:
                 try:
                     import psutil
-                    temps = psutil.sensors_temperatures()
-                    cpu = temps.get("cpu_thermal", [None])[0]
-                    if cpu:
-                        self.cpu_temp = round(cpu.current, 1)
-                    self.memory_usage = round(psutil.virtual_memory().used / (1024 ** 3), 1)
                 except Exception:
                     self.cpu_temp = None
                     self.memory_usage = None
+                else:
+                    try:
+                        temps = psutil.sensors_temperatures()
+                        cpu = temps.get("cpu_thermal", [None])[0]
+                        self.cpu_temp = round(cpu.current, 1) if cpu else None
+                    except Exception:
+                        self.cpu_temp = None
+
+                    try:
+                        self.memory_usage = round(psutil.virtual_memory().used / (1024 ** 3), 1)
+                    except Exception:
+                        self.memory_usage = None
 
                 # The Reflex control surface has no direct Hailo telemetry channel; the
                 # TypeScript backend exposes hardware availability via /api/system/status.
