@@ -1,7 +1,6 @@
 import express from "express";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
@@ -66,6 +65,13 @@ const systemStatusLimiter = createRateLimit({
   legacyHeaders: false
 });
 
+const productionStaticLimiter = createRateLimit({
+  windowMs: 60_000,
+  limit: 120,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 async function startServer() {
   const app = express();
   const server = createServer(app);
@@ -73,7 +79,8 @@ async function startServer() {
   // WebSocket Server attached to the same HTTP server
   const wss = new WebSocketServer({ server });
 
-  const PORT = 3000;
+  const PORT = Number.parseInt(process.env.PORT || "3000", 10);
+  const HOST = process.env.HOST || "0.0.0.0";
 
   // Middleware
   app.use(cors());
@@ -271,19 +278,30 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
+    app.use(productionStaticLimiter);
     app.use(express.static(path.join(__dirname, "dist")));
-    app.get("*", (req, res) => {
+    app.use((req, res, next) => {
+      if (
+        (req.method !== "GET" && req.method !== "HEAD") ||
+        req.path.startsWith("/api/") ||
+        path.extname(req.path)
+      ) {
+        next();
+        return;
+      }
+
       res.sendFile(path.join(__dirname, "dist", "index.html"));
     });
   }
 
-  server.listen(PORT, "0.0.0.0", () => {
+  server.listen(PORT, HOST, () => {
     console.log(`
 ██████╗ ██╗  ██╗ █████╗ ███╗   ██╗████████╗ ██████╗ ███╗   ███╗
 ██╔══██╗██║  ██║██╔══██╗████╗  ██║╚══██╔══╝██╔═══██╗████╗ ████║
@@ -292,7 +310,7 @@ async function startServer() {
 ██║     ██║  ██║██║  ██║██║ ╚████║   ██║   ╚██████╔╝██║ ╚═╝ ██║
 ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚═╝     ╚═╝
                                                                
-PHANTOM CORE SERVER ACTIVE AT http://localhost:${PORT}
+PHANTOM CORE SERVER ACTIVE AT http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}
 NODE_ENV: ${process.env.NODE_ENV || 'development'}
     `);
   });

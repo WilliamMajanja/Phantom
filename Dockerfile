@@ -1,7 +1,6 @@
 
-# Use an official Node.js runtime as a parent image
-# We use a Debian-based image to support the Python scripts and GPIO libraries
-FROM node:20-bookworm
+# Use a Debian Trixie-based Node.js runtime to match Raspberry Pi OS Trixie.
+FROM node:22-trixie
 
 # Set the working directory
 WORKDIR /app
@@ -22,17 +21,20 @@ RUN apt-get update && apt-get install -y \
 
 # Install Node.js dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copy the rest of the application code
 COPY . .
 
 # Build the React application
 RUN npm run build
+RUN npm prune --omit=dev
 
 # Expose the port the app runs on
 EXPOSE 3000
 
-# Start the application using the orchestrator script
-# We use a custom entrypoint to handle the background Python services
-CMD ["npm", "run", "dev"]
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3000
+
+CMD ["npm", "run", "start"]

@@ -4,15 +4,15 @@
 # ==========================================
 # PHANTOM OS: IMAGE FORGER v1.2
 # ==========================================
-# Transforms Raspberry Pi OS Lite into PhantomOS.
+# Transforms Raspberry Pi OS Lite (Trixie) into PhantomOS.
 # Usage: sudo ./build_phantom_os.sh [PI5|LEGACY]
 #   PI5:    Optimized for NVMe, PCIe Gen 3, and Overclocking.
 #   LEGACY: Safe settings for Pi 3B+ and Pi 4.
 
 TARGET_MODEL=${1:-PI5} # Default to PI5 if not specified
 IMAGE_NAME="PhantomOS_v1.2_${TARGET_MODEL}.img"
-SOURCE_URL="https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-03-15/2024-03-15-raspios-bookworm-arm64-lite.img.xz"
-SOURCE_IMG="2024-03-15-raspios-bookworm-arm64-lite.img"
+SOURCE_URL="${SOURCE_URL:-https://downloads.raspberrypi.com/raspios_lite_arm64_latest}"
+SOURCE_IMG="${SOURCE_IMG:-raspios-trixie-arm64-lite.img}"
 MOUNT_POINT="/mnt/phantom_os"
 
 # Check for root

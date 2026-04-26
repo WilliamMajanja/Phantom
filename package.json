@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "start": "NODE_ENV=production tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "raspi:install": "sudo bash scripts/install_raspberry_pi_trixie.sh"
   },
   "dependencies": {
     "@google/genai": "^1.40.0",

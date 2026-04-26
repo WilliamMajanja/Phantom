@@ -26,7 +26,7 @@ if [ "$ROLE" == "NEXUS" ]; then
     # Runs the React App and Audio Engine
     # Ensure NVMe optimization is set (calling existing script)
     ./scripts/setup_nvme.sh
-    echo "✅ NEXUS Ready. Run 'npm start'."
+    echo "✅ NEXUS Ready. Run 'npm run start' or install the systemd service with scripts/install_raspberry_pi_trixie.sh."
 
 elif [ "$ROLE" == "CORTEX" ]; then
     echo "🧠 Setting up CORTEX (AI Mind)..."
