@@ -9,27 +9,9 @@ try:
     import spidev
     import RPi.GPIO as GPIO
     HAS_LORA = True
-except (ImportError, RuntimeError):
-    print("⚠️  LoRa Hardware (SPI/GPIO) not found. Running in Mesh Simulation Mode.")
+except (ImportError, RuntimeError) as exc:
+    print(f"❌ LoRa Hardware (SPI/GPIO) not found: {exc}")
     HAS_LORA = False
-    # Mock GPIO
-    class MockGPIO:
-        BCM = 'BCM'
-        OUT = 'OUT'
-        IN = 'IN'
-        def setmode(self, mode): pass
-        def setwarnings(self, state): pass
-        def setup(self, pin, mode): pass
-        def output(self, pin, state): pass
-        def input(self, pin): return 0
-    GPIO = MockGPIO()
-    # Mock SPI
-    class MockSpiDev:
-        max_speed_hz = 0
-        def open(self, bus, device): pass
-    spidev = MockModule()
-    class MockModule:
-        SpiDev = MockSpiDev
 
 
 # HIVE MESH v1.1
@@ -38,6 +20,9 @@ except (ImportError, RuntimeError):
 
 class HiveMesh:
     def __init__(self, frequency=915.0, reset_pin=22, busy_pin=27, cs_pin=0, spi_bus=0, spi_device=0):
+        if not HAS_LORA:
+            raise RuntimeError("LoRa hardware is required for Hive Mesh operation.")
+
         print("🐝 Initializing Hive Mesh Protocol...")
         print(f"🔧 CONFIG: RST={reset_pin}, BUSY={busy_pin}, CS={cs_pin} (SPI {spi_bus}.{spi_device})")
         
@@ -49,12 +34,11 @@ class HiveMesh:
         GPIO.setup(self.reset_pin, GPIO.OUT)
         GPIO.setup(self.busy_pin, GPIO.IN)
         
-        if HAS_LORA:
-            self.spi = spidev.SpiDev()
-            self.spi.open(spi_bus, spi_device)
-            self.spi.max_speed_hz = 5000000
-            # Hard Reset SX1262
-            self.reset_radio()
+        self.spi = spidev.SpiDev()
+        self.spi.open(spi_bus, spi_device)
+        self.spi.max_speed_hz = 5000000
+        # Hard Reset SX1262
+        self.reset_radio()
 
         self.is_master = False
         print("✅ Mesh Interface Initialized")
@@ -83,29 +67,17 @@ class HiveMesh:
         """
         if not self.is_master: return
         
-        if HAS_LORA:
-            # Real Transmission logic
-            try:
-                payload = struct.pack('<BBBI', 0xA1, 0x01, int(bpm), int(timestamp))
-                # self.lora.send(payload)
-            except Exception as e:
-                print(f"Tx Error: {e}")
-        else:
-            # Simulation log
-            # print(f"🐝 [SIM] Tx Clock: {bpm} BPM")
-            pass
+        try:
+            payload = struct.pack('<BBBI', 0xA1, 0x01, int(bpm), int(timestamp))
+            # self.lora.send(payload)
+        except Exception as e:
+            print(f"Tx Error: {e}")
         
     def listen(self):
-        print(f"🐝 Hive Mesh: Listening on {915 if HAS_LORA else 'VIRTUAL'}MHz...")
+        print("🐝 Hive Mesh: Listening on 915MHz...")
         while True:
             # check_rx() 
             packet = None 
-            
-            # In simulation mode, we might randomly 'receive' a packet to test UI
-            if not HAS_LORA and int(time.time()) % 10 == 0:
-                # Simulate packet every 10s
-                # packet = struct.pack('<BBBI', 0xA1, 0x01, 120, int(time.time()*1000))
-                pass
 
             if packet:
                 self.handle_packet(packet)

@@ -8,19 +8,13 @@ import qrcode
 # Hardware: Mini Thermal Printer (TTL)
 # Wiring: GPIO 14 (TX) -> RX, GPIO 15 (RX) -> TX
 
-# Mock class if hardware is missing to prevent crash
-class MockPrinter:
-    def __getattr__(self, name):
-        return lambda *args: None
-
 try:
     # Raspberry Pi 5 UART 0
     uart = serial.Serial("/dev/serial0", baudrate=19200, timeout=3000)
     printer = adafruit_thermal_printer.get_printer_class(2.69)(uart)
     print("🖨️  Spirit Printer Linked.")
-except:
-    print("⚠️  Printer Hardware Not Found. Using Mock.")
-    printer = MockPrinter()
+except Exception as exc:
+    raise RuntimeError(f"Printer hardware is required for Spirit Ledger receipts: {exc}") from exc
 
 def print_provenance(tx_id, timestamp, hash_val):
     """

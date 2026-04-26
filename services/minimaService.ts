@@ -45,20 +45,12 @@ export function anchorToMinima(sessionHash: string): Promise<ProvenanceRecord> {
     return new Promise((resolve, reject) => {
         // Check if Minima environment is present (MDS is injected by Minima OS)
         if (typeof window.MDS === 'undefined') {
-            console.warn("[Minima] MDS not found. Running in simulation mode.");
-            
-            // SIMULATION MODE
-            setTimeout(() => {
-                const mockTxId = "0xSIM_" + Array.from(crypto.getRandomValues(new Uint8Array(16)))
-                    .map(b => b.toString(16).padStart(2, '0')).join('');
-                
-                resolve({
-                    hash: sessionHash,
-                    timestamp: Date.now(),
-                    blockHeight: Math.floor(Math.random() * 1000000) + 5000000,
-                    signature: mockTxId
-                });
-            }, 1000);
+            reject(new Error("MINIMA_MDS_UNAVAILABLE: PHANTOM must run inside Minima MDS to anchor Omnia records."));
+            return;
+        }
+
+        if (!/^[a-f0-9]{64}$/i.test(sessionHash)) {
+            reject(new Error("INVALID_SESSION_HASH"));
             return;
         }
 

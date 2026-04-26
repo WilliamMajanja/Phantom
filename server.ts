@@ -5,16 +5,66 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
+import createRateLimit from "express-rate-limit";
 import * as dotenv from "dotenv";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
+import { access, readFile } from "fs/promises";
 
 // Initialize environment variables
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
+const PI_FM_RDS_PATH = path.join(__dirname, "pi_fm_rds");
+
+async function commandExists(command: string) {
+  try {
+    await execFileAsync(process.platform === "win32" ? "where" : "which", [command]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function hasLocalFmBinary() {
+  try {
+    await access(PI_FM_RDS_PATH);
+    return true;
+  } catch {
+    return commandExists("pi_fm_rds");
+  }
+}
+
+async function readPiCpuTemperature() {
+  try {
+    const raw = await readFile("/sys/class/thermal/thermal_zone0/temp", "utf8");
+    const temp = Number.parseInt(raw, 10) / 1000;
+    return Number.isFinite(temp) ? temp : null;
+  } catch {
+    return null;
+  }
+}
+
+async function isHttpOk(url: string) {
+  const response = await fetch(url, { signal: AbortSignal.timeout(1500) }).catch(() => null);
+  return !!response?.ok;
+}
+
+const ghostSummonLimiter = createRateLimit({
+  windowMs: 60_000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const systemStatusLimiter = createRateLimit({
+  windowMs: 60_000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 async function startServer() {
   const app = express();
@@ -52,16 +102,15 @@ async function startServer() {
   });
 
   // Ghost AI Summoning (Local Ollama)
-  app.post("/api/ghost/summon", async (req, res) => {
+  app.post("/api/ghost/summon", ghostSummonLimiter, async (req, res) => {
     const { prompt, mood, bpm } = req.body;
     console.log(`[GHOST] Summoning pattern for: "${prompt || mood}" at ${bpm} BPM`);
     
     try {
       // Call the local_ghost.py script
       // We use python3 to ensure we use the correct environment on Pi
-      // Escape prompt to prevent command injection
-      const safePrompt = (prompt || mood || 'dark techno').replace(/"/g, '\\"');
-      const { stdout, stderr } = await execAsync(`python3 scripts/local_ghost.py "${safePrompt}"`);
+      const safePrompt = String(prompt || mood || 'dark techno').slice(0, 500);
+      const { stdout, stderr } = await execFileAsync("python3", [path.join(__dirname, "scripts/local_ghost.py"), safePrompt]);
       
       if (stderr && !stdout) {
         console.error("[GHOST] Script Error:", stderr);
@@ -86,11 +135,27 @@ async function startServer() {
     console.log(`[RADIO] Updating RDS: "${text}" on ${freq}MHz`);
     
     try {
-      // In a real Pi deployment, this interacts with the FM transmitter hardware
-      // We simulate success but log the action for the system log
+      const rdsText = String(text || "").trim();
+      const frequency = Number(freq);
+
+      if (!rdsText || rdsText.length > 64 || !Number.isFinite(frequency) || frequency < 76 || frequency > 108) {
+        res.status(400).json({ success: false, error: "INVALID_RDS_REQUEST" });
+        return;
+      }
+
+      if (!(await hasLocalFmBinary())) {
+        res.status(503).json({
+          success: false,
+          error: "FM_TRANSMITTER_UNAVAILABLE",
+          details: "pi_fm_rds is required on PiNet_Os hardware for RDS broadcast control."
+        });
+        return;
+      }
+
       res.json({ 
         success: true, 
-        message: `RDS_UPDATED: ${text}`,
+        message: `RDS_RADIOTEXT_READY: ${rdsText}`,
+        frequency,
         timestamp: new Date().toISOString()
       });
     } catch (e: any) {
@@ -99,40 +164,34 @@ async function startServer() {
   });
 
   // System Status (Component Availability)
-  app.get("/api/system/status", async (req, res) => {
+  app.get("/api/system/status", systemStatusLimiter, async (req, res) => {
     const status: any = {
       ollama: false,
       hailo: false,
       minima: false,
-      radio: true,
+      radio: false,
       kernel: "OK",
-      cpu_temp: 0
+      cpu_temp: null
     };
 
     try {
       // 1. Check Ollama (Local LLM)
-      const ollamaRes = await fetch("http://localhost:11434/api/tags").catch(() => null);
-      status.ollama = !!ollamaRes;
+      status.ollama = await isHttpOk("http://localhost:11434/api/tags");
 
       // 2. Check Minima (Blockchain Node)
-      const minimaRes = await fetch("http://localhost:9001/status").catch(() => null);
-      status.minima = !!minimaRes;
+      status.minima = await isHttpOk("http://localhost:9001/status");
 
       // 3. Check Hailo NPU (AI Accelerator)
       try {
-        const { stdout } = await execAsync("hailortcli scan");
+        const { stdout } = await execFileAsync("hailortcli", ["scan"]);
         status.hailo = stdout.includes("Device");
       } catch(e) {
         status.hailo = false;
       }
 
       // 4. Get CPU Temp (Pi Specific)
-      try {
-        const { stdout } = await execAsync("cat /sys/class/thermal/thermal_zone0/temp");
-        status.cpu_temp = parseInt(stdout) / 1000;
-      } catch(e) {
-        status.cpu_temp = 45; // Fallback for non-Pi environments
-      }
+      status.cpu_temp = await readPiCpuTemperature();
+      status.radio = await hasLocalFmBinary();
 
       res.json(status);
     } catch (e) {

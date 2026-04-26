@@ -3,7 +3,7 @@ import reflex as rx
 import asyncio
 import time
 import json
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 class Message(rx.Base):
     role: str
@@ -25,9 +25,9 @@ class State(rx.State):
     active_tab: str = "SEQUENCER"
     
     # Telemetry
-    cpu_temp: float = 45.0
-    npu_load: float = 12.0
-    memory_usage: float = 3.2
+    cpu_temp: Optional[float] = None
+    npu_load: Optional[float] = None
+    memory_usage: Optional[float] = None
     
     # Ghost Bridge (AI Assistant)
     chat_history: List[Message] = [
@@ -67,7 +67,7 @@ class State(rx.State):
         self.is_processing = True
         yield
         
-        # Simulate AI Thinking (In production, call interpretSignal here)
+        # Process the operator request before appending the Ghost response.
         await asyncio.sleep(1)
         
         ai_response = Message(
@@ -89,8 +89,25 @@ class State(rx.State):
     async def poll_telemetry(self):
         while True:
             async with self:
-                # Mock hardware polling
-                import random
-                self.cpu_temp = round(45.0 + random.uniform(-2, 2), 1)
-                self.npu_load = round(10.0 + random.uniform(0, 15), 1)
+                try:
+                    import psutil
+                except Exception:
+                    self.cpu_temp = None
+                    self.memory_usage = None
+                else:
+                    try:
+                        temps = psutil.sensors_temperatures()
+                        cpu = temps.get("cpu_thermal", [None])[0]
+                        self.cpu_temp = round(cpu.current, 1) if cpu else None
+                    except Exception:
+                        self.cpu_temp = None
+
+                    try:
+                        self.memory_usage = round(psutil.virtual_memory().used / (1024 ** 3), 1)
+                    except Exception:
+                        self.memory_usage = None
+
+                # The Reflex control surface has no direct Hailo telemetry channel; the
+                # TypeScript backend exposes hardware availability via /api/system/status.
+                self.npu_load = None
             await asyncio.sleep(2)

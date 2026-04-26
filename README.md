@@ -33,7 +33,8 @@ PHANTOM is a full-stack application utilizing an Express backend and a Vite-powe
 ### 🛠️ Prerequisites
 - **Node.js**: v18+ recommended.
 - **Gemini API Key**: Required for Ghost Bridge neural synthesis.
-- **Minima Node**: (Optional) For blockchain provenance features.
+- **Minima MDS / MiniHub**: Required for Omnia anchoring and Axia token minting.
+- **PiNet_Os / Raspberry Pi 5 hardware**: Required for GPIO FM RDS and Hailo NPU features.
 
 ### 📦 Installation
 ```bash
@@ -58,6 +59,9 @@ APP_URL=http://localhost:3000
 npm run dev
 ```
 > **Access Point:** `http://localhost:3000`
+
+### 🟣 Minima MiniDAPP
+PHANTOM now ships with `minidapp.conf` for MiniHub packaging. Build the frontend with `npm run build`, include the generated `dist/` assets with `minidapp.conf`, and run the app inside Minima MDS so `window.MDS` is available. Provenance actions fail closed when MDS is unavailable instead of creating simulated transaction IDs.
 
 ---
 
@@ -103,7 +107,7 @@ PHANTOM nodes communicate via a multi-layered protocol stack designed for reliab
 | Layer | Protocol | Function |
 | :--- | :--- | :--- |
 | **HIVE** | WebSocket / LoRa | Real-time voice-over-mesh and peer discovery. |
-| **RELAY** | Radio RF (Simulated) | Frequency-hopped text messenger and signal relay. |
+| **RELAY** | Radio RF / WebSocket | Frequency-hopped text messenger and signal relay. |
 | **PHANTOM** | Custom Binary | High-speed local cluster synchronization for audio sync. |
 
 ---
