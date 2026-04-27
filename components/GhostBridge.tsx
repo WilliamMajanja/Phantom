@@ -240,7 +240,7 @@ const GhostBridge: React.FC<GhostBridgeProps> = ({ currentState, onUpdate, isPro
                     </button>
                 </form>
                 <div className="mt-2 flex justify-between text-[8px] text-gray-600 font-mono uppercase">
-                    <span>Model: GEMINI-3-FLASH</span>
+                    <span>Model: LOCAL_OLLAMA_PRIMARY</span>
                     <span>Context: MULTI_LINE_ENABLED</span>
                 </div>
             </div>

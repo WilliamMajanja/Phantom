@@ -56,7 +56,7 @@ def header() -> rx.Component:
     )
 
 def nav_rail() -> rx.Component:
-    tabs = ["SEQUENCER", "PERFORMANCE", "PATCHBAY", "NETWORK"]
+    tabs = ["SEQUENCER", "PRODUCTION", "SAMPLES", "PATCHBAY", "NETWORK"]
     return rx.hstack(
         rx.hstack(
             *[
@@ -169,7 +169,7 @@ def ghost_bridge_sidebar() -> rx.Component:
                         width="100%",
                     ),
                     rx.hstack(
-                        rx.text("MODEL: GEMINI-1.5-FLASH", font_size="0.4rem", opacity=0.4),
+                        rx.text("MODEL: LOCAL_OLLAMA_PRIMARY", font_size="0.4rem", opacity=0.4),
                         rx.spacer(),
                         rx.text("CONTEXT: LIVE", font_size="0.4rem", opacity=0.4),
                         width="100%",
@@ -230,6 +230,78 @@ def index() -> rx.Component:
                     padding="2rem",
                 )
             ),
+            rx.cond(
+                State.active_tab == "PRODUCTION",
+                rx.vstack(
+                    rx.hstack(
+                        rx.heading("PRODUCTION_ENGINES", size="4", color="#00ff41"),
+                        rx.spacer(),
+                        rx.button("RESCAN", on_click=State.refresh_engines, size="1", variant="outline"),
+                        width="100%",
+                    ),
+                    rx.grid(
+                        rx.foreach(
+                            State.engine_status,
+                            lambda engine: rx.box(
+                                rx.text(engine["name"], font_weight="bold", font_size="0.9rem"),
+                                rx.text(engine["role"], font_size="0.55rem", color="#777", text_transform="uppercase"),
+                                rx.text(
+                                    rx.cond(engine["available"], "LINK_READY", "INSTALL_REQUIRED"),
+                                    font_size="0.65rem",
+                                    color=rx.cond(engine["available"], "#00ff41", "#facc15"),
+                                    margin_top="1rem",
+                                ),
+                                style=GLASS_PANEL,
+                                padding="1.25rem",
+                            ),
+                        ),
+                        columns="2",
+                        spacing="4",
+                        width="100%",
+                    ),
+                    rx.text(
+                        "LMMS is treated as the production engine and Mixxx as the mixing engine. PHANTOM detects their local commands and exposes readiness to the Python UI.",
+                        font_size="0.7rem",
+                        color="#888",
+                    ),
+                    spacing="4",
+                    width="100%",
+                    max_width="900px",
+                    margin_x="auto",
+                    padding="2rem",
+                ),
+            ),
+            rx.cond(
+                State.active_tab == "SAMPLES",
+                rx.vstack(
+                    rx.heading("SAMPLE_FORMAT_SUPPORT", size="4", color="#00ff41"),
+                    rx.grid(
+                        rx.foreach(
+                            State.sample_support,
+                            lambda fmt: rx.box(
+                                rx.text(fmt["name"], font_weight="bold", font_size="0.85rem"),
+                                rx.text(fmt["extension"], font_size="0.6rem", color="#00ff41"),
+                                rx.text(fmt["role"], font_size="0.65rem", color="#888", margin_top="0.5rem"),
+                                style=GLASS_PANEL,
+                                padding="1.25rem",
+                            ),
+                        ),
+                        columns="2",
+                        spacing="4",
+                        width="100%",
+                    ),
+                    rx.text(
+                        "Exports are manifest-based so local sample folders can be mapped into MPC pad programs or Serato slab/crate metadata without cloud services.",
+                        font_size="0.7rem",
+                        color="#888",
+                    ),
+                    spacing="4",
+                    width="100%",
+                    max_width="900px",
+                    margin_x="auto",
+                    padding="2rem",
+                ),
+            ),
             width="100%",
             height="calc(100vh - 8rem)",
             overflow_y="auto",
@@ -241,4 +313,4 @@ def index() -> rx.Component:
     )
 
 app = rx.App()
-app.add_page(index)
+app.add_page(index, on_load=State.refresh_engines)

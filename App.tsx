@@ -49,6 +49,20 @@ enum Tab {
   NETWORK = 'NETWORK'
 }
 
+interface SystemStatus {
+    ollama: boolean;
+    hailo: boolean;
+    minima: boolean;
+    radio: boolean;
+    lmms: boolean;
+    mixxx: boolean;
+    production_engine: string;
+    mixing_engine: string;
+    sample_formats: string[];
+    kernel: string;
+    cpu_temp: number | null;
+}
+
 const App: React.FC = () => {
   const [bootComplete, setBootComplete] = useState(false);
   const [state, setState] = useState<SequencerState>(INITIAL_STATE);
@@ -65,7 +79,19 @@ const App: React.FC = () => {
   const [isClusterOnline, setIsClusterOnline] = useState(false);
   const [serverOnline, setServerOnline] = useState(false);
   const [systemLogs, setSystemLogs] = useState<LogEntry[]>([]);
-  const [systemStatus, setSystemStatus] = useState({ ollama: false, hailo: false, minima: false, radio: true, kernel: 'OK', cpu_temp: 45 });
+  const [systemStatus, setSystemStatus] = useState<SystemStatus>({
+      ollama: false,
+      hailo: false,
+      minima: false,
+      radio: true,
+      lmms: false,
+      mixxx: false,
+      production_engine: 'LMMS',
+      mixing_engine: 'Mixxx',
+      sample_formats: ['AKAI_MPC_PROGRAM', 'SERATO_SLAB_MANIFEST'],
+      kernel: 'OK',
+      cpu_temp: 45
+  });
   
   // Navigation State
   const [activeTab, setActiveTab] = useState<Tab>(Tab.CORE);
@@ -788,7 +814,7 @@ const App: React.FC = () => {
             <div className="h-full max-w-7xl mx-auto p-4 md:p-8 flex flex-col gap-6 animate-fade-in overflow-y-auto custom-scrollbar">
                 {/* MIXER CONSOLE - TOP */}
                 <div className="w-full flex-shrink-0">
-                    <MixerConsole tracks={state.tracks} onUpdateTrack={handleUpdateTrack} />
+                    <MixerConsole tracks={state.tracks} onUpdateTrack={handleUpdateTrack} engineStatus={systemStatus} />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 flex-grow min-h-0 pb-8">
@@ -833,6 +859,24 @@ const App: React.FC = () => {
                             <div className="flex items-center justify-between p-3 bg-gray-900/50 border border-gray-800 rounded">
                                 <span className="text-[10px] font-bold">PI_FM_RDS</span>
                                 <div className={`w-2 h-2 rounded-full ${systemStatus.radio ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500'}`}></div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-gray-900/50 border border-gray-800 rounded">
+                                <span className="text-[10px] font-bold">LMMS_ENGINE</span>
+                                <div className={`w-2 h-2 rounded-full ${systemStatus.lmms ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-yellow-500'}`}></div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-gray-900/50 border border-gray-800 rounded">
+                                <span className="text-[10px] font-bold">MIXXX_ENGINE</span>
+                                <div className={`w-2 h-2 rounded-full ${systemStatus.mixxx ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-yellow-500'}`}></div>
+                            </div>
+                            <div className="col-span-2 p-3 bg-gray-900/50 border border-gray-800 rounded">
+                                <span className="text-[10px] font-bold text-gray-400">SAMPLE_SUPPORT</span>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {systemStatus.sample_formats.map(format => (
+                                        <span key={format} className="text-[8px] border border-accent/30 text-accent px-2 py-1 rounded">
+                                            {format}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
