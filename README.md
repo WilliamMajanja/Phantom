@@ -6,7 +6,7 @@
   
   [![License: MIT](https://img.shields.io/badge/License-MIT-00ff41.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
   [![Platform](https://img.shields.io/badge/Hardware-Raspberry_Pi_5-red?style=for-the-badge)](https://www.raspberrypi.com/)
-  [![Core](https://img.shields.io/badge/AI-Local_Ollama_|_Gemini-blue?style=for-the-badge)]()
+  [![Core](https://img.shields.io/badge/AI-Ollama%20%2B%20Gemini-blue?style=for-the-badge)]()
   [![Network](https://img.shields.io/badge/Protocol-LoRa_Mesh-orange?style=for-the-badge)]()
   [![Blockchain](https://img.shields.io/badge/Ledger-Minima-purple?style=for-the-badge)]()
 </div>

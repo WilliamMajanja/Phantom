@@ -56,7 +56,8 @@ def ask_ollama(prompt: str, bpm: int) -> dict[str, Any]:
     try:
         with urllib.request.urlopen(request, timeout=45) as response:
             data = json.loads(response.read().decode("utf-8"))
-        body = json.loads(data.get("response", "{}"))
+        response_body = data.get("response")
+        body = json.loads(response_body) if response_body else {}
         return {
             "online": True,
             "message": body.get("response") or "LOCAL_OLLAMA_PATTERN_READY",

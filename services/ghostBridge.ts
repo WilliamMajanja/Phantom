@@ -63,6 +63,9 @@ const updateSequencerTool: FunctionDeclaration = {
 };
 
 const tools: Tool[] = [{ functionDeclarations: [updateSequencerTool] }];
+const DEFAULT_STEP_PROBABILITY = 1.0;
+const DEFAULT_ACTIVE_VELOCITY = 0.8;
+const DEFAULT_INACTIVE_VELOCITY = 0.0;
 
 export interface BridgeResponse {
     success: boolean;
@@ -193,12 +196,16 @@ const parseGeneratedState = (args: any, currentState: SequencerState): Partial<S
     const knownTypes = new Set(Object.values(InstrumentType));
     const toStep = (step: any) => {
         if (typeof step === 'boolean' || typeof step === 'number') {
-            return { active: Boolean(step), probability: 1.0, velocity: Boolean(step) ? 0.8 : 0.0 };
+            return {
+                active: Boolean(step),
+                probability: DEFAULT_STEP_PROBABILITY,
+                velocity: Boolean(step) ? DEFAULT_ACTIVE_VELOCITY : DEFAULT_INACTIVE_VELOCITY
+            };
         }
         return {
             active: Boolean(step?.active),
-            probability: clampNumber(step?.probability, 1.0, 0, 1),
-            velocity: clampNumber(step?.velocity, step?.active ? 0.8 : 0.0, 0, 1)
+            probability: clampNumber(step?.probability, DEFAULT_STEP_PROBABILITY, 0, 1),
+            velocity: clampNumber(step?.velocity, step?.active ? DEFAULT_ACTIVE_VELOCITY : DEFAULT_INACTIVE_VELOCITY, 0, 1)
         };
     };
 

@@ -33,6 +33,12 @@ VALID_TYPES = {
     "bass_sub_808",
     "fx_glitch",
 }
+FALLBACK_PARAMS = {
+    "kick": {"volume": 0.9, "decay": 0.5, "pitch": 50, "tone": 0.25, "filterCutoff": 1000},
+    "snare": {"volume": 0.82, "decay": 0.22, "pitch": 210, "tone": 0.55, "filterCutoff": 3200},
+    "hihat_closed": {"volume": 0.62, "decay": 0.06, "pitch": 1000, "tone": 0.85, "filterCutoff": 9000},
+    "bass_fm": {"volume": 0.76, "decay": 0.45, "pitch": 55, "tone": 0.65, "filterCutoff": 850},
+}
 
 
 def log(message: str) -> None:
@@ -77,16 +83,19 @@ def fallback_pattern(mood: str, bpm: int) -> dict[str, Any]:
         kick = [1, 0, 0, 0] * 4
         snare = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
 
-    hats = [1 if i % 2 == 0 or "driving" in prompt else 0 for i in range(16)]
+    def hat_step(step_index: int) -> int:
+        return 1 if step_index % 2 == 0 or "driving" in prompt else 0
+
+    hats = [hat_step(i) for i in range(16)]
     bass = [1 if i in {0, 3, 6, 10, 13} else 0 for i in range(16)]
     return {
         "bpm": bpm,
         "swing": 0.08 if "swing" in prompt or "shuffle" in prompt else 0,
         "tracks": [
-            {"name": "KICK_CORE", "type": "kick", "steps": kick, "params": {"volume": 0.9, "decay": 0.5, "pitch": 50, "tone": 0.25, "filterCutoff": 1000}},
-            {"name": "SNARE_VOID", "type": "snare", "steps": snare, "params": {"volume": 0.82, "decay": 0.22, "pitch": 210, "tone": 0.55, "filterCutoff": 3200}},
-            {"name": "HAT_CLOSED", "type": "hihat_closed", "steps": hats, "params": {"volume": 0.62, "decay": 0.06, "pitch": 1000, "tone": 0.85, "filterCutoff": 9000}},
-            {"name": "BASS_REESE", "type": "bass_fm", "steps": bass, "params": {"volume": 0.76, "decay": 0.45, "pitch": 55, "tone": 0.65, "filterCutoff": 850}},
+            {"name": "KICK_CORE", "type": "kick", "steps": kick, "params": FALLBACK_PARAMS["kick"]},
+            {"name": "SNARE_VOID", "type": "snare", "steps": snare, "params": FALLBACK_PARAMS["snare"]},
+            {"name": "HAT_CLOSED", "type": "hihat_closed", "steps": hats, "params": FALLBACK_PARAMS["hihat_closed"]},
+            {"name": "BASS_REESE", "type": "bass_fm", "steps": bass, "params": FALLBACK_PARAMS["bass_fm"]},
         ],
     }
 
