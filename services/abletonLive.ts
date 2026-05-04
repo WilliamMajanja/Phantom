@@ -2,6 +2,9 @@ import { InstrumentType, SequencerState, Track } from '../types';
 
 const TICKS_PER_BEAT = 480;
 const MAX_MIDI_CHANNEL = 15;
+const MAX_MIDI_VELOCITY = 127;
+const DEFAULT_STEP_VELOCITY = 0.8;
+const DEFAULT_TRACK_VOLUME = 0.8;
 const SYNTH_CHANNEL_COUNT = 8;
 const MIN_GATE_TICKS = 12;
 const MAX_MIDI_TEXT_LENGTH = 64;
@@ -30,6 +33,21 @@ const ABLETON_NOTE_MAP: Record<InstrumentType, number> = {
   [InstrumentType.ARP_PLUCK]: 76,
   [InstrumentType.FX_GLITCH]: 84,
 };
+
+const DRUM_INSTRUMENT_TYPES = new Set<InstrumentType>([
+  InstrumentType.KICK,
+  InstrumentType.SNARE,
+  InstrumentType.HIHAT_CLOSED,
+  InstrumentType.HIHAT_OPEN,
+  InstrumentType.TOM_LOW,
+  InstrumentType.TOM_MID,
+  InstrumentType.TOM_HIGH,
+  InstrumentType.RIM_SHOT,
+  InstrumentType.HAND_CLAP,
+  InstrumentType.CRASH,
+  InstrumentType.RIDE,
+  InstrumentType.FX_GLITCH,
+]);
 
 const ENGINE_DESCRIPTIONS = [
   {
@@ -101,10 +119,10 @@ const toBytes = (value: number, bytes: number): number[] => {
   return result;
 };
 
-const strToBytes = (value: string): number[] => Array.from(value).map((char) => char.charCodeAt(0) & 0xff);
+const stringToAsciiBytes = (value: string): number[] => Array.from(value).map((char) => char.charCodeAt(0) & 0xff);
 
 const metaText = (type: number, value: string): number[] => {
-  const bytes = strToBytes(value.slice(0, MAX_MIDI_TEXT_LENGTH));
+  const bytes = stringToAsciiBytes(value.slice(0, MAX_MIDI_TEXT_LENGTH));
   return [0x00, 0xff, type, ...toVLQ(bytes.length), ...bytes];
 };
 
@@ -122,28 +140,21 @@ const buildTrackChunk = (name: string, events: MidiEvent[]): number[] => {
 
   trackData.push(0x00, 0xff, 0x2f, 0x00);
 
-  return [...strToBytes('MTrk'), ...toBytes(trackData.length, 4), ...trackData];
+  return [...stringToAsciiBytes('MTrk'), ...toBytes(trackData.length, 4), ...trackData];
 };
 
 const getTrackChannel = (track: Track, index: number) => {
-  if (
-    track.type === InstrumentType.KICK ||
-    track.type === InstrumentType.SNARE ||
-    track.type === InstrumentType.HIHAT_CLOSED ||
-    track.type === InstrumentType.HIHAT_OPEN ||
-    track.type === InstrumentType.TOM_LOW ||
-    track.type === InstrumentType.TOM_MID ||
-    track.type === InstrumentType.TOM_HIGH ||
-    track.type === InstrumentType.RIM_SHOT ||
-    track.type === InstrumentType.HAND_CLAP ||
-    track.type === InstrumentType.CRASH ||
-    track.type === InstrumentType.RIDE ||
-    track.type === InstrumentType.FX_GLITCH
-  ) {
+  if (DRUM_INSTRUMENT_TYPES.has(track.type)) {
     return 9;
   }
 
   return Math.min(MAX_MIDI_CHANNEL, index % SYNTH_CHANNEL_COUNT);
+};
+
+const calculateMidiVelocity = (track: Track, stepVelocity?: number): number => {
+  const velocity = stepVelocity ?? DEFAULT_STEP_VELOCITY;
+  const volume = track.params.volume ?? DEFAULT_TRACK_VOLUME;
+  return Math.max(1, Math.min(MAX_MIDI_VELOCITY, Math.round(velocity * volume * MAX_MIDI_VELOCITY)));
 };
 
 const collectTrackEvents = (track: Track, index: number, stepsPerBar: number): MidiEvent[] => {
@@ -157,7 +168,7 @@ const collectTrackEvents = (track: Track, index: number, stepsPerBar: number): M
     if (!step.active) return;
 
     const tick = Math.round(stepIndex * ticksPerStep);
-    const velocity = Math.max(1, Math.min(127, Math.round((step.velocity || 0.8) * (track.params.volume || 0.8) * 127)));
+    const velocity = calculateMidiVelocity(track, step.velocity);
 
     events.push({ tick, data: [0x90 | channel, note, velocity] });
     events.push({ tick: Math.round(tick + gate), data: [0x80 | channel, note, 0] });
@@ -170,7 +181,7 @@ export const generateAbletonLiveMidiFile = (state: SequencerState): Blob => {
   const stepsPerBar = state.timeSignature || 16;
   const mpqn = Math.floor(60_000_000 / state.bpm);
   const header = [
-    ...strToBytes('MThd'),
+    ...stringToAsciiBytes('MThd'),
     ...toBytes(6, 4),
     ...toBytes(1, 2),
     ...toBytes(state.tracks.length + 1, 2),

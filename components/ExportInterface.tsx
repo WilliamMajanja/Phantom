@@ -30,7 +30,7 @@ const ExportInterface: React.FC<ExportInterfaceProps> = ({ isOpen, onClose, stat
     const handleAbletonMidiExport = () => {
         const midiBlob = generateAbletonLiveMidiFile(state);
         const safeName = filename.replace(/[^a-z0-9-_]/gi, '_');
-        downloadBlob(midiBlob, `${safeName}.ableton-live.mid`);
+        downloadBlob(midiBlob, `${safeName}_ableton_live.mid`);
     };
 
     const handleAbletonManifestExport = () => {

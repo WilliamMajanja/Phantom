@@ -115,7 +115,7 @@ PHANTOM now includes an Ableton-focused plugin bridge workflow for Live Suite us
 *   **Recommended Live setup**:
     1. Create a virtual MIDI port named `PHANTOM Live Bridge` (IAC Driver on macOS, loopMIDI on Windows, or ALSA virmidi on Linux).
     2. Enable the port for `Track` and `Remote` input in Ableton Live preferences.
-    3. Import the `.ableton-live.mid` file into Session View.
+    3. Import the `_ableton_live.mid` file into Session View.
     4. Mirror the manifest's eight macro targets in a Live rack or Max for Live companion device.
     5. Use PHANTOM's Web MIDI output, Ghost Bridge, Prism Deck, and Performance Core as the plugin control surface.
 
