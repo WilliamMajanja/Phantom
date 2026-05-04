@@ -6,9 +6,15 @@ import Knob from './Knob';
 interface MixerConsoleProps {
     tracks: Track[];
     onUpdateTrack: (index: number, updates: Partial<Track>) => void;
+    engineStatus?: {
+        lmms?: boolean;
+        mixxx?: boolean;
+        production_engine?: string;
+        mixing_engine?: string;
+    };
 }
 
-const MixerConsole: React.FC<MixerConsoleProps> = ({ tracks, onUpdateTrack }) => {
+const MixerConsole: React.FC<MixerConsoleProps> = ({ tracks, onUpdateTrack, engineStatus }) => {
     
     return (
         <div className="glass-panel p-3 sm:p-6 w-full flex flex-col gap-4 overflow-x-auto custom-scrollbar">
@@ -17,6 +23,27 @@ const MixerConsole: React.FC<MixerConsoleProps> = ({ tracks, onUpdateTrack }) =>
                 <div className="flex gap-2">
                     <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#00ff00]"></div>
                     <span className="text-[8px] sm:text-[9px] font-mono text-gray-500">AUDIO ENGINE ACTIVE</span>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sticky left-0">
+                <div className="bg-black/50 border border-gray-800 rounded p-3 flex items-center justify-between">
+                    <div>
+                        <div className="text-[8px] text-gray-500 uppercase tracking-widest">Production Engine</div>
+                        <div className="text-[10px] text-gray-300 font-bold">{engineStatus?.production_engine || 'LMMS'}</div>
+                    </div>
+                    <span className={`text-[9px] font-bold ${engineStatus?.lmms ? 'text-accent' : 'text-yellow-500'}`}>
+                        {engineStatus?.lmms ? 'LINK_READY' : 'INSTALL_LMMS'}
+                    </span>
+                </div>
+                <div className="bg-black/50 border border-gray-800 rounded p-3 flex items-center justify-between">
+                    <div>
+                        <div className="text-[8px] text-gray-500 uppercase tracking-widest">Mixing Engine</div>
+                        <div className="text-[10px] text-gray-300 font-bold">{engineStatus?.mixing_engine || 'Mixxx'}</div>
+                    </div>
+                    <span className={`text-[9px] font-bold ${engineStatus?.mixxx ? 'text-accent' : 'text-yellow-500'}`}>
+                        {engineStatus?.mixxx ? 'LINK_READY' : 'INSTALL_MIXXX'}
+                    </span>
                 </div>
             </div>
 

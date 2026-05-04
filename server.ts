@@ -117,14 +117,15 @@ async function startServer() {
       // Call the local_ghost.py script
       // We use python3 to ensure we use the correct environment on Pi
       const safePrompt = String(prompt || mood || 'dark techno').slice(0, 500);
-      const { stdout, stderr } = await execFileAsync("python3", [path.join(__dirname, "scripts/local_ghost.py"), safePrompt]);
+      const safeBpm = Number.isFinite(Number(bpm)) ? String(Math.max(40, Math.min(240, Number(bpm)))) : "135";
+      const { stdout, stderr } = await execFileAsync("python3", [path.join(__dirname, "scripts/local_ghost.py"), safePrompt, safeBpm]);
       
       if (stderr && !stdout) {
         console.error("[GHOST] Script Error:", stderr);
         throw new Error(stderr);
       }
       
-      const pattern = JSON.parse(stdout);
+      const pattern = JSON.parse(stdout.trim());
       res.json({ success: true, pattern });
     } catch (e: any) {
       console.error("[GHOST] Error:", e.message);
@@ -177,6 +178,11 @@ async function startServer() {
       hailo: false,
       minima: false,
       radio: false,
+      lmms: false,
+      mixxx: false,
+      production_engine: "LMMS",
+      mixing_engine: "Mixxx",
+      sample_formats: ["AKAI_MPC_PROGRAM", "SERATO_SLAB_MANIFEST"],
       kernel: "OK",
       cpu_temp: null
     };
@@ -199,6 +205,8 @@ async function startServer() {
       // 4. Get CPU Temp (Pi Specific)
       status.cpu_temp = await readPiCpuTemperature();
       status.radio = await hasLocalFmBinary();
+      status.lmms = await commandExists("lmms");
+      status.mixxx = await commandExists("mixxx");
 
       res.json(status);
     } catch (e) {

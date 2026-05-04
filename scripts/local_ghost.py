@@ -1,73 +1,177 @@
+#!/usr/bin/env python3
+"""Local PHANTOM pattern generator backed by Ollama.
 
-import requests
+The Node backend expects this script to write exactly one JSON document to stdout.
+All diagnostics therefore go to stderr.
+"""
+
+from __future__ import annotations
+
 import json
+import os
 import sys
+import urllib.error
+import urllib.request
+from typing import Any
 
-# PHANTOM PHASE 8: THE GHOST IN THE SHELL
-# Offline Intelligence Node via Ollama (Llama 3 8B)
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
+MODEL = os.environ.get("OLLAMA_MODEL", "llama3:8b-instruct-q4_K_M")
+DEFAULT_BPM = int(os.environ.get("PHANTOM_DEFAULT_BPM", "135"))
+VALID_TYPES = {
+    "kick",
+    "snare",
+    "hihat_closed",
+    "hihat_open",
+    "bass_fm",
+    "tom_low",
+    "tom_mid",
+    "tom_high",
+    "rim_shot",
+    "hand_clap",
+    "crash",
+    "ride",
+    "bass_sub_808",
+    "fx_glitch",
+}
+FALLBACK_PARAMS = {
+    "kick": {"volume": 0.9, "decay": 0.5, "pitch": 50, "tone": 0.25, "filterCutoff": 1000},
+    "snare": {"volume": 0.82, "decay": 0.22, "pitch": 210, "tone": 0.55, "filterCutoff": 3200},
+    "hihat_closed": {"volume": 0.62, "decay": 0.06, "pitch": 1000, "tone": 0.85, "filterCutoff": 9000},
+    "bass_fm": {"volume": 0.76, "decay": 0.45, "pitch": 55, "tone": 0.65, "filterCutoff": 850},
+}
 
-# Configuration
-OLLAMA_URL = "http://localhost:11434/api/generate"
-# Fits in Pi 5 16GB RAM (approx 6GB usage)
-MODEL = "llama3:8b-instruct-q4_K_M" 
 
-class LocalGhost:
-    def __init__(self):
-        print("👻 Initializing Local Llama 3 Node...")
-        self.verify_connection()
+def log(message: str) -> None:
+    print(message, file=sys.stderr)
 
-    def verify_connection(self):
-        try:
-            requests.get(OLLAMA_URL.replace("/api/generate", ""))
-            print("✅ Ollama Service Linked.")
-        except:
-            print("❌ Ollama Offline. Ghost is silent.")
 
-    def summon_pattern(self, mood="dark industrial", bpm=135):
-        prompt = f"""
-        You are the PHANTOM Drum Machine Sequencer. 
-        Role: Industrial Techno Composer.
-        Task: Create a 16-step pattern for {mood} style at {bpm} BPM.
-        Output: ONLY valid JSON. No Markdown. No chatter.
-        Schema:
-        {{
-            "bpm": {bpm},
-            "tracks": [
-                {{ "name": "KICK_MAIN", "type": "kick", "steps": [1,0,0,0...], "params": {{ "decay": 0.5, "pitch": 50, "tone": 0.2, "filterCutoff": 1000 }} }},
-                {{ "name": "HH_CL", "type": "hihat_closed", "steps": [1,1,1,1...], "params": {{...}} }}
-            ]
-        }}
-        """
-        
-        payload = {
-            "model": MODEL,
-            "prompt": prompt,
-            "stream": False,
-            "format": "json", # Force JSON mode
-            "options": {
-                "temperature": 0.8,
-                "num_ctx": 4096
+def post_json(url: str, payload: dict[str, Any], timeout: int = 45) -> dict[str, Any]:
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def normalize_steps(raw_steps: Any) -> list[int]:
+    steps = raw_steps if isinstance(raw_steps, list) else []
+    normalized: list[int] = []
+    for step in steps[:16]:
+        if isinstance(step, dict):
+            normalized.append(1 if step.get("active") else 0)
+        else:
+            normalized.append(1 if bool(step) else 0)
+    while len(normalized) < 16:
+        normalized.append(0)
+    return normalized
+
+
+def fallback_pattern(mood: str, bpm: int) -> dict[str, Any]:
+    prompt = mood.lower()
+    if "dnb" in prompt or "jungle" in prompt:
+        bpm = 174
+        kick = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+        snare = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+    elif "hip hop" in prompt or "trap" in prompt:
+        bpm = 140
+        kick = [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0]
+        snare = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+    else:
+        if "house" in prompt:
+            bpm = 124
+        elif "slow" in prompt or "downtempo" in prompt:
+            bpm = 90
+        kick = [1, 0, 0, 0] * 4
+        snare = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+
+    def hat_step(step_index: int) -> int:
+        return 1 if step_index % 2 == 0 or "driving" in prompt else 0
+
+    hats = [hat_step(i) for i in range(16)]
+    bass = [1 if i in {0, 3, 6, 10, 13} else 0 for i in range(16)]
+    return {
+        "bpm": bpm,
+        "swing": 0.08 if "swing" in prompt or "shuffle" in prompt else 0,
+        "tracks": [
+            {"name": "KICK_CORE", "type": "kick", "steps": kick, "params": FALLBACK_PARAMS["kick"]},
+            {"name": "SNARE_VOID", "type": "snare", "steps": snare, "params": FALLBACK_PARAMS["snare"]},
+            {"name": "HAT_CLOSED", "type": "hihat_closed", "steps": hats, "params": FALLBACK_PARAMS["hihat_closed"]},
+            {"name": "BASS_REESE", "type": "bass_fm", "steps": bass, "params": FALLBACK_PARAMS["bass_fm"]},
+        ],
+    }
+
+
+def sanitize_pattern(pattern: Any, mood: str, bpm: int) -> dict[str, Any]:
+    if not isinstance(pattern, dict):
+        return fallback_pattern(mood, bpm)
+
+    safe_bpm = pattern.get("bpm", bpm)
+    if not isinstance(safe_bpm, (int, float)) or safe_bpm < 40 or safe_bpm > 240:
+        safe_bpm = bpm
+
+    tracks = []
+    for index, track in enumerate(pattern.get("tracks", [])):
+        if not isinstance(track, dict):
+            continue
+        track_type = str(track.get("type", "kick")).lower()
+        if track_type not in VALID_TYPES:
+            track_type = "kick" if index == 0 else "hihat_closed"
+        params = track.get("params") if isinstance(track.get("params"), dict) else {}
+        tracks.append(
+            {
+                "name": str(track.get("name") or track_type).upper()[:32],
+                "type": track_type,
+                "steps": normalize_steps(track.get("steps")),
+                "pan": max(-1, min(1, float(track.get("pan", 0) or 0))),
+                "params": {
+                    "volume": max(0, min(1, float(params.get("volume", 0.8) or 0.8))),
+                    "decay": max(0.01, min(4, float(params.get("decay", 0.5) or 0.5))),
+                    "pitch": max(20, min(4000, float(params.get("pitch", 100) or 100))),
+                    "tone": max(0, min(1, float(params.get("tone", 0.5) or 0.5))),
+                    "filterCutoff": max(20, min(20000, float(params.get("filterCutoff", 2000) or 2000))),
+                },
             }
-        }
-        
-        try:
-            print(f"👻 Summoning Pattern: {mood}...")
-            response = requests.post(OLLAMA_URL, json=payload)
-            data = response.json()
-            
-            if 'response' in data:
-                # Return the raw JSON string for the frontend to parse
-                return json.loads(data['response'])
-            else:
-                return None
-                
-        except Exception as e:
-            print(f"💀 Ghost Silence: {e}")
-            return None
+        )
+
+    if not tracks:
+        return fallback_pattern(mood, int(safe_bpm))
+    return {"bpm": int(safe_bpm), "swing": pattern.get("swing", 0), "tracks": tracks[:8]}
+
+
+def summon_pattern(mood: str = "dark industrial", bpm: int = DEFAULT_BPM) -> dict[str, Any]:
+    prompt = f"""
+You are the PHANTOM Drum Machine Sequencer running locally through Ollama.
+Create a tight 16-step pattern for this request: {mood}
+Tempo target: {bpm} BPM.
+Return ONLY valid JSON with this schema:
+{{
+  "bpm": number,
+  "swing": number,
+  "tracks": [
+    {{"name":"KICK_CORE","type":"kick","steps":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],"pan":0,"params":{{"volume":0.9,"decay":0.5,"pitch":50,"tone":0.2,"filterCutoff":1000}}}}
+  ]
+}}
+Use only these track types: {', '.join(sorted(VALID_TYPES))}.
+"""
+    payload = {
+        "model": MODEL,
+        "prompt": prompt,
+        "stream": False,
+        "format": "json",
+        "options": {"temperature": 0.75, "num_ctx": 4096},
+    }
+    try:
+        data = post_json(OLLAMA_URL, payload)
+        response_text = data.get("response")
+        return sanitize_pattern(json.loads(response_text), mood, bpm) if response_text else fallback_pattern(mood, bpm)
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
+        log(f"Ollama unavailable, using deterministic fallback: {exc}")
+        return fallback_pattern(mood, bpm)
+
 
 if __name__ == "__main__":
-    ghost = LocalGhost()
-    if len(sys.argv) > 1:
-        print(json.dumps(ghost.summon_pattern(sys.argv[1])))
-    else:
-        print(json.dumps(ghost.summon_pattern()))
+    mood_arg = sys.argv[1] if len(sys.argv) > 1 else "dark industrial"
+    try:
+        bpm_arg = int(float(sys.argv[2])) if len(sys.argv) > 2 else DEFAULT_BPM
+    except ValueError:
+        bpm_arg = DEFAULT_BPM
+    print(json.dumps(summon_pattern(mood_arg[:500], bpm_arg), separators=(",", ":")))

@@ -4,6 +4,7 @@ import asyncio
 import time
 import json
 from typing import List, Dict, Optional
+from .engines import ask_ollama, production_engines, sample_formats
 
 class Message(rx.Base):
     role: str
@@ -36,6 +37,11 @@ class State(rx.State):
     current_prompt: str = ""
     is_processing: bool = False
     sidebar_open: bool = False
+    local_ai_online: bool = False
+
+    # Production and sample backends
+    engine_status: List[Dict[str, object]] = production_engines()
+    sample_support: List[Dict[str, str]] = sample_formats()
 
     # Sequencer Data
     tracks: List[Track] = [
@@ -67,12 +73,16 @@ class State(rx.State):
         self.is_processing = True
         yield
         
-        # Process the operator request before appending the Ghost response.
-        await asyncio.sleep(1)
+        prompt = self.current_prompt
+        result = await asyncio.to_thread(ask_ollama, prompt, self.bpm)
+        self.local_ai_online = bool(result.get("online"))
+        pattern = result.get("pattern") or {}
+        if isinstance(pattern.get("bpm"), int):
+            self.bpm = pattern["bpm"]
         
         ai_response = Message(
             role="GHOST",
-            text=f"PROTOCOL_EXECUTED // PATTERN_RECONFIGURED // BPM:{self.bpm}",
+            text=f"{result.get('message', 'LOCAL_GHOST_READY')} // BPM:{self.bpm}",
             timestamp=time.strftime("%H:%M")
         )
         self.chat_history.append(ai_response)
@@ -110,4 +120,8 @@ class State(rx.State):
                 # The Reflex control surface has no direct Hailo telemetry channel; the
                 # TypeScript backend exposes hardware availability via /api/system/status.
                 self.npu_load = None
+                self.engine_status = production_engines()
             await asyncio.sleep(2)
+
+    def refresh_engines(self):
+        self.engine_status = production_engines()

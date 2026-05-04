@@ -3,7 +3,7 @@ import { GoogleGenAI, FunctionDeclaration, Type, Tool, Content } from '@google/g
 import { SequencerState, InstrumentType } from '../types';
 
 // THE GHOST BRIDGE
-// Interface for the Gemini 1.5 Flash Model with Local Fallback
+// Interface for cloud models with local Ollama fallback
 
 const API_KEY = process.env.API_KEY;
 let ai: GoogleGenAI | null = null;
@@ -63,6 +63,9 @@ const updateSequencerTool: FunctionDeclaration = {
 };
 
 const tools: Tool[] = [{ functionDeclarations: [updateSequencerTool] }];
+const DEFAULT_STEP_PROBABILITY = 1.0;
+const DEFAULT_ACTIVE_VELOCITY = 0.8;
+const DEFAULT_INACTIVE_VELOCITY = 0.0;
 
 export interface BridgeResponse {
     success: boolean;
@@ -158,7 +161,7 @@ export const interpretSignal = async (
     }
   }
 
-  // 2. LOCAL PROTOCOL (Ollama / AirLLM)
+  // 2. LOCAL PROTOCOL (Ollama)
   try {
     const response = await fetch('/api/ghost/summon', {
         method: 'POST',
@@ -188,32 +191,59 @@ export const interpretSignal = async (
   };
 };
 
-// --- HELPER: Parse Gemini Output ---
+// --- HELPER: Parse AI Output ---
 const parseGeneratedState = (args: any, currentState: SequencerState): Partial<SequencerState> => {
-    const newTracks = args.tracks.map((t: any, index: number) => ({
+    const knownTypes = new Set(Object.values(InstrumentType));
+    const toStep = (step: any) => {
+        if (typeof step === 'boolean' || typeof step === 'number') {
+            return {
+                active: Boolean(step),
+                probability: DEFAULT_STEP_PROBABILITY,
+                velocity: Boolean(step) ? DEFAULT_ACTIVE_VELOCITY : DEFAULT_INACTIVE_VELOCITY
+            };
+        }
+        return {
+            active: Boolean(step?.active),
+            probability: clampNumber(step?.probability, DEFAULT_STEP_PROBABILITY, 0, 1),
+            velocity: clampNumber(step?.velocity, step?.active ? DEFAULT_ACTIVE_VELOCITY : DEFAULT_INACTIVE_VELOCITY, 0, 1)
+        };
+    };
+
+    const sourceTracks = Array.isArray(args?.tracks) ? args.tracks : [];
+    const newTracks = sourceTracks.slice(0, 12).map((t: any, index: number) => {
+        const requestedType = String(t?.type || '').toLowerCase() as InstrumentType;
+        const type = knownTypes.has(requestedType) ? requestedType : currentState.tracks[index]?.type ?? InstrumentType.KICK;
+        const rawSteps = Array.isArray(t?.steps) ? t.steps : [];
+        const normalizedSteps = Array.from({ length: currentState.timeSignature || 16 }, (_, stepIndex) => toStep(rawSteps[stepIndex]));
+        return {
         id: `trk_phantom_${Date.now()}_${index}`,
-        name: t.name.toUpperCase(),
-        type: t.type as InstrumentType,
-        steps: t.steps.map((s: any) => ({
-        active: s.active,
-        probability: s.probability ?? 1.0
-        })),
+        name: String(t?.name || type).toUpperCase().slice(0, 32),
+        type,
+        steps: normalizedSteps,
         mute: false,
         solo: false,
-        pan: t.pan ?? 0,
+        pan: clampNumber(t?.pan, 0, -1, 1),
         params: {
-        decay: t.params?.decay ?? 0.5,
-        pitch: t.params?.pitch ?? 100,
-        tone: t.params?.tone ?? 0.5,
-        filterCutoff: t.params?.filterCutoff ?? 2000
+        volume: clampNumber(t?.params?.volume, 0.8, 0, 1),
+        decay: clampNumber(t?.params?.decay, 0.5, 0.01, 4),
+        pitch: clampNumber(t?.params?.pitch, 100, 20, 4000),
+        tone: clampNumber(t?.params?.tone, 0.5, 0, 1),
+        filterCutoff: clampNumber(t?.params?.filterCutoff, 2000, 20, 20000)
         }
-    }));
+    };
+    });
 
     return {
-        bpm: args.bpm,
-        swing: args.swing ?? currentState.swing,
-        tracks: newTracks
+        bpm: clampNumber(args?.bpm, currentState.bpm, 40, 240),
+        swing: clampNumber(args?.swing, currentState.swing, 0, 1),
+        tracks: newTracks.length > 0 ? newTracks : currentState.tracks
     };
+};
+
+const clampNumber = (value: any, fallback: number, min: number, max: number): number => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return fallback;
+    return Math.max(min, Math.min(max, numeric));
 };
 
 // --- HELPER: Local Heuristic Engine ---
