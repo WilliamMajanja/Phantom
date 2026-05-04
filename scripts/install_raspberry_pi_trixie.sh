@@ -25,7 +25,7 @@ fi
 validate_system_name "${APP_USER}" "APP_USER"
 validate_system_name "${APP_GROUP}" "APP_GROUP"
 
-if [[ ! "${APP_DIR}" =~ ^/[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*$ ]]; then
+if [[ ! "${APP_DIR}" =~ ^/[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)*$ ]]; then
   echo "APP_DIR must be an absolute path without consecutive or trailing slashes." >&2
   exit 1
 fi

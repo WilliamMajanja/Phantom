@@ -24,13 +24,15 @@ function getErrorMessage(error: unknown) {
 }
 
 function parseFrequency(value: unknown, fallback?: string): string | null {
-  const frequency = Number(value ?? fallback);
+  for (const candidate of [value, fallback]) {
+    const frequency = Number(candidate);
 
-  if (!Number.isFinite(frequency) || frequency < 76 || frequency > 108) {
-    return null;
+    if (Number.isFinite(frequency) && frequency >= 76 && frequency <= 108) {
+      return frequency.toFixed(1);
+    }
   }
 
-  return frequency.toFixed(1);
+  return null;
 }
 
 function parseText(value: unknown, maxLength: number) {
@@ -186,7 +188,14 @@ async function startServer() {
 
     ws.on("message", (data) => {
       try {
-        const parsed = JSON.parse(data.toString());
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(data.toString());
+        } catch {
+          ws.send(JSON.stringify({ type: "ERROR", error: "INVALID_JSON" }));
+          return;
+        }
+
         if (!isRecord(parsed) || typeof parsed.type !== "string") {
           ws.send(JSON.stringify({ type: "ERROR", error: "INVALID_MESSAGE" }));
           return;
@@ -236,11 +245,11 @@ async function startServer() {
         if (message.type === "LORA_VOICE") {
           wss.clients.forEach((client) => {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({
-                  type: "LORA_VOICE_RECEPTION",
-                  payload: parseText(message.payload, 4096),
-                  nodeId: parseText(message.nodeId, 64)
-                }));
+              client.send(JSON.stringify({
+                type: "LORA_VOICE_RECEPTION",
+                payload: parseText(message.payload, 4096),
+                nodeId: parseText(message.nodeId, 64)
+              }));
             }
           });
         }

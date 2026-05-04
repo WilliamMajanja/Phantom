@@ -16,7 +16,7 @@ export type RuntimeConfig = {
 
 function parseInteger(value: string | undefined, fallback: number, min: number, max: number) {
   const parsed = Number.parseInt(value || "", 10);
-  if (!Number.isFinite(parsed)) {
+  if (Number.isNaN(parsed)) {
     return fallback;
   }
 
@@ -54,7 +54,17 @@ function normalizeHost(value: string | undefined) {
 
 function normalizeJsonLimit(value: string | undefined) {
   const limit = value?.trim();
-  return limit && /^[1-9]\d*(b|kb|mb)?$/i.test(limit) ? limit : "64kb";
+  const match = limit?.match(/^([1-9]\d*)(b|kb|mb)?$/i);
+  if (!match) {
+    return "64kb";
+  }
+
+  const amount = Number.parseInt(match[1], 10);
+  const unit = match[2]?.toLowerCase() || "b";
+  const multiplier = unit === "mb" ? 1024 * 1024 : unit === "kb" ? 1024 : 1;
+  const bytes = amount * multiplier;
+
+  return bytes <= 10 * 1024 * 1024 ? limit : "64kb";
 }
 
 export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): RuntimeConfig {

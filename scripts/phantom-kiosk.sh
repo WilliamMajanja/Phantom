@@ -4,6 +4,7 @@ set -euo pipefail
 ENV_FILE="${PHANTOM_ENV_FILE:-/etc/phantom/phantom.env}"
 
 if [[ -r "${ENV_FILE}" ]]; then
+  # The env file location is intentionally configurable for alternate Pi images.
   # shellcheck disable=SC1090
   source "${ENV_FILE}"
 fi
