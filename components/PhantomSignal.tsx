@@ -149,17 +149,15 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle, onAirCha
          </div>
       </div>
 
-      {/* Spectrum Analyzer (Simulated) */}
+      {/* Spectrum Analyzer */}
       <div className="w-full h-12 flex items-end gap-0.5 px-2 relative z-10 overflow-hidden bg-black/40 border border-gray-800/50 rounded-sm">
-          {[...Array(32)].map((_, i) => (
+          {spectrumBands.map((level, i) => (
               <div 
                   key={i} 
-                  className={`flex-1 transition-all duration-150 ${isOnAir || isScanning ? 'animate-bounce' : 'h-1'} ${isScanning ? 'bg-gray-500' : 'bg-accent/40'}`}
+                  className={`flex-1 transition-all duration-150 ${isScanning ? 'bg-gray-500 animate-pulse' : 'bg-accent/40'}`}
                   style={{ 
-                      height: (isOnAir || isScanning) ? `${Math.random() * 100}%` : '2px',
-                      animationDuration: `${0.3 + Math.random() * 0.7}s`,
-                      animationDelay: `${i * 0.05}s`,
-                      opacity: isScanning ? 0.1 + Math.random() * 0.4 : 0.3 + (i / 32) * 0.7
+                      height: `${Math.max(2, Math.round(level * 100))}%`,
+                      opacity: isScanning ? 0.5 : 0.3 + (level * 0.7)
                   }}
               ></div>
           ))}

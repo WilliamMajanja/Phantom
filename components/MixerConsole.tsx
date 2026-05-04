@@ -128,10 +128,12 @@ const MixerConsole: React.FC<MixerConsoleProps> = ({ tracks, onUpdateTrack, engi
                             {Math.round((track.params.volume || 0.8) * 100)}
                         </div>
 
-                        {/* Meter (Fake) */}
+                        {/* Step Level Meter */}
                         <div className="absolute right-1 top-10 bottom-10 w-1 bg-gray-900 rounded overflow-hidden">
-                             {/* In a real app, this would be an AudioWorklet message */}
-                             <div className="absolute bottom-0 left-0 w-full bg-green-500 opacity-50 animate-pulse" style={{ height: `${(track.params.volume || 0) * 60}%` }}></div>
+                              <div
+                                className="absolute bottom-0 left-0 w-full bg-green-500 opacity-50 transition-all duration-100"
+                                style={{ height: `${playing && track.steps[currentStep % track.steps.length]?.active && !track.mute ? (track.params.volume || 0) * 100 : 0}%` }}
+                              ></div>
                         </div>
 
                     </div>
