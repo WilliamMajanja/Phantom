@@ -65,6 +65,7 @@ export async function probeSystemStatus(config: {
   ollamaTagsUrl: string;
   minimaStatusUrl: string;
 }): Promise<SystemStatus> {
+  const kernel = await readKernelRelease();
   const status: SystemStatus = {
     ollama: false,
     hailo: false,
@@ -75,7 +76,7 @@ export async function probeSystemStatus(config: {
     production_engine: "LMMS",
     mixing_engine: "Mixxx",
     sample_formats: ["AKAI_MPC_PROGRAM", "SERATO_SLAB_MANIFEST"],
-    kernel: "UNKNOWN",
+    kernel,
     cpu_temp: null
   };
 
@@ -90,7 +91,6 @@ export async function probeSystemStatus(config: {
   }
 
   status.cpu_temp = await readPiCpuTemperature();
-  status.kernel = await readKernelRelease();
   status.radio = await hasLocalFmBinary(config.appRoot);
   status.lmms = await commandExists("lmms");
   status.mixxx = await commandExists("mixxx");

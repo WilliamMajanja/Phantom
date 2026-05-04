@@ -30,6 +30,11 @@ if [[ ! "${APP_DIR}" =~ ^/[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*$ ]]; then
   exit 1
 fi
 
+if [[ "${APP_DIR}" == *"/../"* || "${APP_DIR}" == */.. ]]; then
+  echo "APP_DIR must not contain parent-directory traversal segments." >&2
+  exit 1
+fi
+
 if [[ -r /etc/os-release ]]; then
   # shellcheck disable=SC1091
   source /etc/os-release
@@ -132,7 +137,8 @@ RestartSec=5
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
-ReadWritePaths="${APP_DIR}" "${ENV_DIR}"
+ReadWritePaths=${APP_DIR}
+ReadWritePaths=${ENV_DIR}
 
 [Install]
 WantedBy=multi-user.target
