@@ -14,7 +14,7 @@
 ---
 
 ## 🌌 THE NEURAL CORE
-**PHANTOM** is a tactical, AI-native Minima-PiNet-Os DApp designed for resilient creative output in any environment. By merging high-fidelity synthesis with decentralized communication protocols and RMPE-2 blockchain provenance, PHANTOM exists where the edge node meets the chain.
+**PHANTOM** is a tactical, AI-native Minima-PiNet-Os DApp designed for resilient creative output in any environment. By merging high-fidelity synthesis with decentralized communication protocols and RNPE-2 blockchain provenance, PHANTOM exists where the edge node meets the chain.
 
 It is built to run on Raspberry Pi 5 edge hardware, uses local Ollama models for neural pattern generation, and fails closed when required local services or Minima MDS are unavailable.
 
@@ -23,7 +23,7 @@ It is built to run on Raspberry Pi 5 edge hardware, uses local Ollama models for
 *   **GhostBridge V3**: Neural pattern synthesis powered by local Ollama with no simulated pattern fallback, supporting multi-line tactical commands and MIDI exfiltration.
 *   **Production Engines**: LMMS is detected as the local production engine and Mixxx as the local mixing engine.
 *   **Hive Protocol**: Peer-to-peer LoRa Mesh networking for voice and data sync across nodes via WebSockets.
-*   **Spirit Ledger**: Immutable session anchoring and asset registration via the RMPE-2 provenance profile on Minima.
+*   **Spirit Ledger**: Immutable session anchoring and asset registration via RNPE-2 peer verification with compact RMP state roots on Minima.
 
 ---
 
@@ -35,7 +35,7 @@ PHANTOM ships with the Express/Vite control surface for local-first Minima-PiNet
 - **Node.js**: v18+ recommended.
 - **Ollama**: Required for local Ghost Bridge neural synthesis (`OLLAMA_MODEL` defaults to `llama3:8b-instruct-q4_K_M`).
 - **LMMS and Mixxx**: Optional local production and mixing engines detected by PHANTOM status APIs.
-- **Minima MDS / MiniHub**: Required for RMPE-2 anchoring and provenance registration.
+- **Minima MDS / MiniHub**: Required for RNPE-2 anchoring and provenance registration.
 - **PiNet_Os / Raspberry Pi 5 hardware**: Required for GPIO FM RDS and Hailo NPU features.
 
 ### 📦 Installation
@@ -113,13 +113,13 @@ The Ghost Bridge is your neural link to the machine. Use the command console to 
 
 ## 🔗 BLOCKCHAIN PROVENANCE
 
-PHANTOM integrates deeply with the **Minima Blockchain** through the RMPE-2 provenance profile to ensure your creative output is tracked and owned.
+PHANTOM integrates deeply with the **Minima Blockchain** through the RNPE-2 provenance profile to ensure your creative output is tracked and owned.
 
-### ⚓ RMPE-2 Anchoring
-Anchor your entire session state to the blockchain. PHANTOM generates a cryptographic "Spirit Hash" of your current patterns, parameters, and telemetry, then anchors it to a Minima block using RMPE-2 state markers. This creates an immutable record of your creative process.
+### ⚓ RNPE-2 Anchoring
+Anchor your entire session state to the blockchain. PHANTOM generates a cryptographic "Spirit Hash" of your current patterns, parameters, and telemetry, compresses the state into an RMP (Recursive Merkle Proof) root, then anchors both values to a Minima block using RNPE-2 state markers. This creates an immutable record of your creative process and the consensus view used when the record was created.
 
-### 💎 RMPE-2 Registration
-Register unique audio patterns as digital assets. Using RMPE-2, you can create a unique Minima token that represents a specific pattern, complete with its metadata and provenance hash.
+### 💎 RNPE-2 Registration
+Register unique audio patterns as digital assets. Using RNPE-2, you can create a unique Minima token that represents a specific pattern, complete with its metadata, provenance hash, and RMP proof root.
 
 ---
 
@@ -132,6 +132,8 @@ PHANTOM nodes communicate via a multi-layered protocol stack designed for reliab
 | **HIVE** | WebSocket / LoRa | Real-time voice-over-mesh and peer discovery. |
 | **RELAY** | Radio RF / WebSocket | Frequency-hopped text messenger and signal relay. |
 | **PHANTOM** | Custom Binary | High-speed local cluster synchronization for audio sync. |
+| **RMP** | Recursive Merkle Proof | Compact state root used to validate current network/session state with minimal overhead. |
+| **RNPE-2** | Recursive Network Peer Exchange | Peer verification profile for requesting missing blocks and checking local state against network consensus. |
 
 ---
 

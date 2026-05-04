@@ -20,7 +20,7 @@ import SplashScreen from './components/SplashScreen';
 import { INITIAL_STATE, INSTRUMENT_SETTINGS } from './constants';
 import { SequencerState, ProvenanceRecord, InstrumentType, Track, TelemetryData, Pattern } from './types';
 import { shadowCore } from './services/audio/ShadowCore';
-import { anchorSpirit, captureSpiritHash, registerRmpe2Provenance } from './services/spiritLedger';
+import { anchorSpirit, captureSpiritHash, registerRnpe2Provenance } from './services/spiritLedger';
 import { phantomProtocol } from './services/phantomProtocol';
 import { clusterService } from './services/clusterService';
 import { radioService } from './services/radioService';
@@ -72,7 +72,7 @@ const App: React.FC = () => {
   const [provenance, setProvenance] = useState<ProvenanceRecord | null>(null);
   const [isAnchoring, setIsAnchoring] = useState(false);
   const [isMinting, setIsMinting] = useState(false);
-  const [rmpe2Token, setRmpe2Token] = useState<any | null>(null);
+  const [rnpe2Token, setRnpe2Token] = useState<any | null>(null);
   const [focusMode, setFocusMode] = useState(false);
   const [selectedTrackIndex, setSelectedTrackIndex] = useState<number | null>(null);
   const [isAddTrackModalOpen, setIsAddTrackModalOpen] = useState(false);
@@ -406,30 +406,30 @@ const App: React.FC = () => {
     if (isAnchoring || isKillSwitchActive) return;
     setIsAnchoring(true);
     try {
-      const { hash } = await captureSpiritHash(state);
-      const record = await anchorSpirit(hash);
+      const { hash, rmpProof } = await captureSpiritHash(state);
+      const record = await anchorSpirit(hash, rmpProof);
       setProvenance(record);
-      logService.addLog('SUCCESS', 'RMPE2', 'SPIRIT_ANCHORED');
+      logService.addLog('SUCCESS', 'RNPE2', 'RMP_SPIRIT_ANCHORED');
     } catch (e) {
       console.error("Spirit Anchor failed", e);
-      logService.addLog('ERROR', 'RMPE2', 'ANCHOR_FAILED');
+      logService.addLog('ERROR', 'RNPE2', 'ANCHOR_FAILED');
     } finally {
       setIsAnchoring(false);
     }
   };
 
-  const handleRegisterRmpe2 = async () => {
+  const handleRegisterRnpe2 = async () => {
     if (isMinting || isKillSwitchActive) return;
     setIsMinting(true);
     try {
-      const { hash } = await captureSpiritHash(state);
+      const { hash, rmpProof } = await captureSpiritHash(state);
       const patternName = state.patterns[state.activePatternId]?.name || "UNNAMED";
-      const token = await registerRmpe2Provenance(patternName, hash);
-      setRmpe2Token(token);
-      logService.addLog('SUCCESS', 'RMPE2', 'PROVENANCE_REGISTERED');
+      const token = await registerRnpe2Provenance(patternName, hash, rmpProof);
+      setRnpe2Token(token);
+      logService.addLog('SUCCESS', 'RNPE2', 'PROVENANCE_REGISTERED');
     } catch (e) {
-      console.error("RMPE-2 registration failed", e);
-      logService.addLog('ERROR', 'RMPE2', 'REGISTRATION_FAILED');
+      console.error("RNPE-2 registration failed", e);
+      logService.addLog('ERROR', 'RNPE2', 'REGISTRATION_FAILED');
     } finally {
       setIsMinting(false);
     }
@@ -593,21 +593,21 @@ const App: React.FC = () => {
                 h-7 sm:h-8 px-2 sm:px-4 font-bold text-[8px] sm:text-[10px] tracking-wide border transition-all flex items-center gap-1 sm:gap-2 rounded-sm
                 ${provenance ? 'border-accent text-accent bg-accent/10' : isAnchoring ? 'border-gray-700 text-gray-700' : 'bg-black border-gray-600 text-gray-300 hover:border-white'}
               `}
-              title="Anchor Session to Minima RMPE-2"
+              title="Anchor Session to Minima RNPE-2 with an RMP root"
             >
-              {isAnchoring ? <span className="animate-spin text-[10px]">⟳</span> : provenance ? '⚓ RMPE2_OK' : 'RMPE2_ANCHOR'}
+              {isAnchoring ? <span className="animate-spin text-[10px]">⟳</span> : provenance ? '⚓ RNPE2_OK' : 'RNPE2_ANCHOR'}
             </button>
 
             <button 
-              onClick={handleRegisterRmpe2}
-              disabled={isMinting || !!rmpe2Token || isKillSwitchActive}
+              onClick={handleRegisterRnpe2}
+              disabled={isMinting || !!rnpe2Token || isKillSwitchActive}
               className={`
                 h-7 sm:h-8 px-2 sm:px-4 font-bold text-[8px] sm:text-[10px] tracking-wide border transition-all flex items-center gap-1 sm:gap-2 rounded-sm
-                ${rmpe2Token ? 'border-purple-500 text-purple-500 bg-purple-500/10' : isMinting ? 'border-gray-700 text-gray-700' : 'bg-black border-gray-600 text-gray-300 hover:border-white'}
+                ${rnpe2Token ? 'border-purple-500 text-purple-500 bg-purple-500/10' : isMinting ? 'border-gray-700 text-gray-700' : 'bg-black border-gray-600 text-gray-300 hover:border-white'}
               `}
-              title="Register Provenance Token on Minima RMPE-2"
+              title="Register Provenance Token on Minima RNPE-2"
             >
-              {isMinting ? <span className="animate-spin text-[10px]">⟳</span> : rmpe2Token ? '💎 RMPE2_REGISTERED' : 'RMPE2_REGISTER'}
+              {isMinting ? <span className="animate-spin text-[10px]">⟳</span> : rnpe2Token ? '💎 RNPE2_REGISTERED' : 'RNPE2_REGISTER'}
             </button>
             
             <button 
@@ -836,7 +836,7 @@ const App: React.FC = () => {
                 <div className="space-y-8">
                     <ClusterMonitor />
                     <TelemetryDeck data={telemetry} />
-                    <ProvenanceDeck record={provenance} token={rmpe2Token} />
+                    <ProvenanceDeck record={provenance} token={rnpe2Token} />
                 </div>
                 <div className="flex flex-col gap-8">
                     {/* SYSTEM AVAILABILITY */}

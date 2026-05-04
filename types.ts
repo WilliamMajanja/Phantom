@@ -83,6 +83,24 @@ export interface ProvenanceRecord {
   timestamp: number;
   blockHeight: number;
   signature: string;
+  rmpProof?: RecursiveMerkleProof;
+  rnpe2?: Rnpe2Verification;
+}
+
+export interface RecursiveMerkleProof {
+  version: 'RMP-1';
+  root: string;
+  stateHash: string;
+  leafCount: number;
+  depth: number;
+  frontier: string[];
+}
+
+export interface Rnpe2Verification {
+  profile: 'RNPE-2';
+  consensusBlock: number;
+  proofRoot: string;
+  verified: boolean;
 }
 
 export interface MinimaTransaction {
