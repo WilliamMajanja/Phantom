@@ -23,12 +23,12 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Unknown error";
 }
 
-function parseFrequency(value: unknown, fallback?: string): string | null {
+function parseFrequency(value: unknown, fallback?: string): number | null {
   for (const candidate of [value, fallback]) {
     const frequency = Number(candidate);
 
     if (Number.isFinite(frequency) && frequency >= 76 && frequency <= 108) {
-      return frequency.toFixed(1);
+      return frequency;
     }
   }
 
@@ -155,7 +155,7 @@ async function startServer() {
       res.json({ 
         success: true, 
         message: `RDS_RADIOTEXT_READY: ${rdsText}`,
-        frequency: Number(frequency),
+        frequency,
         timestamp: new Date().toISOString()
       });
     } catch (e: unknown) {
@@ -214,7 +214,7 @@ async function startServer() {
             frequencies.get(currentFreq)?.delete(ws);
           }
           
-          currentFreq = nextFrequency;
+          currentFreq = nextFrequency.toFixed(1);
           if (!frequencies.has(currentFreq)) {
             frequencies.set(currentFreq, new Set());
           }

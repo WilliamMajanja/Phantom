@@ -25,6 +25,7 @@ fi
 validate_system_name "${APP_USER}" "APP_USER"
 validate_system_name "${APP_GROUP}" "APP_GROUP"
 
+# Keep APP_DIR deliberately strict because it is embedded into a generated systemd unit.
 if [[ ! "${APP_DIR}" =~ ^/[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)*$ ]]; then
   echo "APP_DIR must be an absolute path without consecutive or trailing slashes." >&2
   exit 1
@@ -97,6 +98,7 @@ chown -R "${APP_USER}:${APP_GROUP}" "${APP_DIR}"
 cd "${APP_DIR}"
 runuser -u "${APP_USER}" -- npm ci
 runuser -u "${APP_USER}" -- npm run build
+# Build requires dev dependencies; prune them before running the long-lived appliance service.
 runuser -u "${APP_USER}" -- npm prune --omit=dev
 
 if [[ ! -f "${ENV_FILE}" ]]; then

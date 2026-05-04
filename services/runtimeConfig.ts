@@ -64,7 +64,7 @@ function normalizeJsonLimit(value: string | undefined) {
   const multiplier = unit === "mb" ? 1024 * 1024 : unit === "kb" ? 1024 : 1;
   const bytes = amount * multiplier;
 
-  return bytes <= 10 * 1024 * 1024 ? limit : "64kb";
+  return bytes <= 10 * 1024 * 1024 ? `${amount}${unit}` : "64kb";
 }
 
 export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): RuntimeConfig {
