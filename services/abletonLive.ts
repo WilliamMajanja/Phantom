@@ -1,6 +1,10 @@
 import { InstrumentType, SequencerState, Track } from '../types';
 
 const TICKS_PER_BEAT = 480;
+const MAX_MIDI_CHANNEL = 15;
+const SYNTH_CHANNEL_COUNT = 8;
+const MIN_GATE_TICKS = 12;
+const MAX_MIDI_TEXT_LENGTH = 64;
 
 const ABLETON_NOTE_MAP: Record<InstrumentType, number> = {
   [InstrumentType.KICK]: 36,
@@ -55,6 +59,17 @@ const ENGINE_DESCRIPTIONS = [
   },
 ];
 
+export const ABLETON_LIVE_MACROS = [
+  { macro: 1, name: 'M_FILTER', source: 'Performance Core filter' },
+  { macro: 2, name: 'DATA_ROT', source: 'Performance Core bit crush' },
+  { macro: 3, name: 'DUB_DELAY', source: 'Performance Core delay send' },
+  { macro: 4, name: 'DARK_VERB', source: 'Performance Core reverb send' },
+  { macro: 5, name: 'SWING', source: 'Sequencer groove' },
+  { macro: 6, name: 'PRISM_RATE', source: 'Prism Deck playback rate' },
+  { macro: 7, name: 'PRISM_DETUNE', source: 'Prism Deck detune' },
+  { macro: 8, name: 'STEM_BLEND', source: 'Prism stem balance' },
+];
+
 interface MidiEvent {
   tick: number;
   data: number[];
@@ -89,7 +104,7 @@ const toBytes = (value: number, bytes: number): number[] => {
 const strToBytes = (value: string): number[] => Array.from(value).map((char) => char.charCodeAt(0) & 0xff);
 
 const metaText = (type: number, value: string): number[] => {
-  const bytes = strToBytes(value.slice(0, 64));
+  const bytes = strToBytes(value.slice(0, MAX_MIDI_TEXT_LENGTH));
   return [0x00, 0xff, type, ...toVLQ(bytes.length), ...bytes];
 };
 
@@ -128,7 +143,7 @@ const getTrackChannel = (track: Track, index: number) => {
     return 9;
   }
 
-  return Math.min(15, index % 8);
+  return Math.min(MAX_MIDI_CHANNEL, index % SYNTH_CHANNEL_COUNT);
 };
 
 const collectTrackEvents = (track: Track, index: number, stepsPerBar: number): MidiEvent[] => {
@@ -136,7 +151,7 @@ const collectTrackEvents = (track: Track, index: number, stepsPerBar: number): M
   const ticksPerStep = TICKS_PER_BEAT / (stepsPerBar / 4);
   const channel = getTrackChannel(track, index);
   const note = ABLETON_NOTE_MAP[track.type] ?? 60;
-  const gate = Math.max(12, ticksPerStep * 0.9);
+  const gate = Math.max(MIN_GATE_TICKS, ticksPerStep * 0.9);
 
   track.steps.forEach((step, stepIndex) => {
     if (!step.active) return;
@@ -192,16 +207,7 @@ export const createAbletonLivePluginManifest = (state: SequencerState) => ({
     abletonLink: true,
   },
   engines: ENGINE_DESCRIPTIONS,
-  macros: [
-    { macro: 1, name: 'M_FILTER', source: 'Performance Core filter' },
-    { macro: 2, name: 'DATA_ROT', source: 'Performance Core bit crush' },
-    { macro: 3, name: 'DUB_DELAY', source: 'Performance Core delay send' },
-    { macro: 4, name: 'DARK_VERB', source: 'Performance Core reverb send' },
-    { macro: 5, name: 'SWING', source: 'Sequencer groove' },
-    { macro: 6, name: 'PRISM_RATE', source: 'Prism Deck playback rate' },
-    { macro: 7, name: 'PRISM_DETUNE', source: 'Prism Deck detune' },
-    { macro: 8, name: 'STEM_BLEND', source: 'Prism stem balance' },
-  ],
+  macros: ABLETON_LIVE_MACROS,
   scenes: Object.values(state.patterns).map((pattern, sceneIndex) => ({
     scene: sceneIndex + 1,
     id: pattern.id,

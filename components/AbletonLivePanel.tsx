@@ -1,6 +1,6 @@
 import React from 'react';
 import { SequencerState } from '../types';
-import { getAbletonLiveEngines } from '../services/abletonLive';
+import { ABLETON_LIVE_MACROS, getAbletonLiveEngines } from '../services/abletonLive';
 
 interface AbletonLivePanelProps {
   state: SequencerState;
@@ -98,10 +98,10 @@ const AbletonLivePanel: React.FC<AbletonLivePanelProps> = ({ state, onOpenExport
         <div className="glass-panel p-5 bg-black/60">
           <div className="text-[10px] text-accent font-bold uppercase tracking-widest mb-4">Rack Macro Targets</div>
           <div className="grid grid-cols-2 gap-2">
-            {['M_FILTER', 'DATA_ROT', 'DUB_DELAY', 'DARK_VERB', 'SWING', 'PRISM_RATE', 'PRISM_DETUNE', 'STEM_BLEND'].map((macro, index) => (
-              <div key={macro} className="bg-gray-900/60 border border-gray-800 p-3 rounded-sm">
-                <div className="text-[8px] text-purple-300 font-mono">MACRO {index + 1}</div>
-                <div className="text-[10px] text-white font-bold tracking-widest">{macro}</div>
+            {ABLETON_LIVE_MACROS.map((macro) => (
+              <div key={macro.name} className="bg-gray-900/60 border border-gray-800 p-3 rounded-sm">
+                <div className="text-[8px] text-purple-300 font-mono">MACRO {macro.macro}</div>
+                <div className="text-[10px] text-white font-bold tracking-widest">{macro.name}</div>
               </div>
             ))}
           </div>
