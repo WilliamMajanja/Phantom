@@ -24,7 +24,7 @@ const HiveSync: React.FC = () => {
       }));
     });
 
-    return cleanup;
+    return () => { cleanup(); };
   }, []);
 
   const toggleHive = () => {
