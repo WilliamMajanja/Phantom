@@ -23,7 +23,7 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Unknown error";
 }
 
-function parseFrequency(value: unknown, fallback?: string) {
+function parseFrequency(value: unknown, fallback?: string): string | null {
   const frequency = Number(value ?? fallback);
 
   if (!Number.isFinite(frequency) || frequency < 76 || frequency > 108) {
@@ -188,6 +188,7 @@ async function startServer() {
       try {
         const parsed = JSON.parse(data.toString());
         if (!isRecord(parsed) || typeof parsed.type !== "string") {
+          ws.send(JSON.stringify({ type: "ERROR", error: "INVALID_MESSAGE" }));
           return;
         }
 

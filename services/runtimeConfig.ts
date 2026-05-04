@@ -1,3 +1,5 @@
+import { isIP } from "node:net";
+
 export type RuntimeConfig = {
   host: string;
   port: number;
@@ -38,6 +40,23 @@ function normalizeBaseUrl(value: string | undefined, fallback: string) {
   return fallback;
 }
 
+function normalizeHost(value: string | undefined) {
+  const host = value?.trim();
+  if (!host) {
+    return "0.0.0.0";
+  }
+
+  const hostnamePattern =
+    /^(?=.{1,253}$)(localhost|[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*)$/;
+
+  return isIP(host) || hostnamePattern.test(host) ? host : "0.0.0.0";
+}
+
+function normalizeJsonLimit(value: string | undefined) {
+  const limit = value?.trim();
+  return limit && /^[1-9]\d*(b|kb|mb)?$/i.test(limit) ? limit : "64kb";
+}
+
 export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): RuntimeConfig {
   const port = parseInteger(env.PORT, 3000, 1, 65535);
   const appUrl = normalizeBaseUrl(env.APP_URL, `http://localhost:${port}`);
@@ -45,12 +64,12 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): Runtime
   const minimaBaseUrl = normalizeBaseUrl(env.MINIMA_BASE_URL, "http://localhost:9001");
 
   return {
-    host: env.HOST?.trim() || "0.0.0.0",
+    host: normalizeHost(env.HOST),
     port,
     appUrl,
     ollamaTagsUrl: `${ollamaBaseUrl}/api/tags`,
     minimaStatusUrl: `${minimaBaseUrl}/status`,
-    jsonLimit: env.JSON_BODY_LIMIT || "64kb",
+    jsonLimit: normalizeJsonLimit(env.JSON_BODY_LIMIT),
     rateLimits: {
       ghostSummonPerMinute: parseInteger(env.GHOST_SUMMON_RATE_LIMIT, 10, 1, 120),
       systemStatusPerMinute: parseInteger(env.SYSTEM_STATUS_RATE_LIMIT, 30, 1, 300),

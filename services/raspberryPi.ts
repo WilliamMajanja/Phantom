@@ -12,8 +12,8 @@ export type SystemStatus = {
   radio: boolean;
   lmms: boolean;
   mixxx: boolean;
-  production_engine: "LMMS";
-  mixing_engine: "Mixxx";
+  production_engine: string;
+  mixing_engine: string;
   sample_formats: string[];
   kernel: string;
   cpu_temp: number | null;
@@ -94,6 +94,8 @@ export async function probeSystemStatus(config: {
   status.radio = await hasLocalFmBinary(config.appRoot);
   status.lmms = await commandExists("lmms");
   status.mixxx = await commandExists("mixxx");
+  status.production_engine = status.lmms ? "LMMS" : "LMMS unavailable";
+  status.mixing_engine = status.mixxx ? "Mixxx" : "Mixxx unavailable";
 
   return status;
 }
