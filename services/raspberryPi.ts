@@ -15,7 +15,7 @@ export type SystemStatus = {
   production_engine: "LMMS";
   mixing_engine: "Mixxx";
   sample_formats: string[];
-  kernel: "OK";
+  kernel: string;
   cpu_temp: number | null;
 };
 
@@ -47,6 +47,14 @@ export async function readPiCpuTemperature() {
   }
 }
 
+export async function readKernelRelease() {
+  try {
+    return (await readFile("/proc/sys/kernel/osrelease", "utf8")).trim();
+  } catch {
+    return "UNKNOWN";
+  }
+}
+
 export async function isHttpOk(url: string) {
   const response = await fetch(url, { signal: AbortSignal.timeout(1500) }).catch(() => null);
   return !!response?.ok;
@@ -67,7 +75,7 @@ export async function probeSystemStatus(config: {
     production_engine: "LMMS",
     mixing_engine: "Mixxx",
     sample_formats: ["AKAI_MPC_PROGRAM", "SERATO_SLAB_MANIFEST"],
-    kernel: "OK",
+    kernel: "UNKNOWN",
     cpu_temp: null
   };
 
@@ -82,6 +90,7 @@ export async function probeSystemStatus(config: {
   }
 
   status.cpu_temp = await readPiCpuTemperature();
+  status.kernel = await readKernelRelease();
   status.radio = await hasLocalFmBinary(config.appRoot);
   status.lmms = await commandExists("lmms");
   status.mixxx = await commandExists("mixxx");

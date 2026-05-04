@@ -11,7 +11,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 validate_system_name() {
   local value="$1"
   local label="$2"
-  if [[ ! "${value}" =~ ^[a-z_][a-z0-9_-]*[$]?$ ]]; then
+  if [[ ! "${value}" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
     echo "Invalid ${label}: ${value}" >&2
     exit 1
   fi
@@ -90,8 +90,9 @@ rsync -a --delete \
 chown -R "${APP_USER}:${APP_GROUP}" "${APP_DIR}"
 
 cd "${APP_DIR}"
-runuser -u "${APP_USER}" -- npm ci --include=dev
+runuser -u "${APP_USER}" -- npm ci
 runuser -u "${APP_USER}" -- npm run build
+runuser -u "${APP_USER}" -- npm prune --omit=dev
 
 if [[ ! -f "${ENV_FILE}" ]]; then
   cat > "${ENV_FILE}" <<EOF
