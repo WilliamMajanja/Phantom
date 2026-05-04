@@ -164,7 +164,7 @@ class RadioService {
       return values[0].toString(16).padStart(8, "0").toUpperCase();
     }
 
-    throw new Error("SECURE_RANDOM_UNAVAILABLE: Radio node identity requires browser crypto. Serve PHANTOM over HTTPS or localhost.");
+    throw new Error("SECURE_RANDOM_UNAVAILABLE: Radio node identity requires browser crypto in a secure context (HTTPS, localhost, or file://).");
   }
 
   public onMessage(cb: (msg: RadioMessage) => void) {

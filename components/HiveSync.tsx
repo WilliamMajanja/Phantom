@@ -6,7 +6,7 @@ import { radioService } from '../services/radioService';
 const HiveSync: React.FC = () => {
   const MAX_RSSI_DB = -30;
   const MIN_RSSI_DB = -120;
-  // Latency is the only browser-visible LoRa link metric; this UI calibration maps every 4ms to 1dB of displayed link loss across the -30..-120dB range.
+  // Latency is the only browser-visible LoRa link metric; 4ms maps to 1dB, so the -30..-120dB display spans roughly 360ms.
   const RSSI_LATENCY_FACTOR = 4;
   const calculateRssiFromLatency = (latency: number | null) => (
     Math.max(MIN_RSSI_DB, Math.min(MAX_RSSI_DB, MAX_RSSI_DB - ((latency || 0) / RSSI_LATENCY_FACTOR)))

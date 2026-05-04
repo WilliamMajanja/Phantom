@@ -47,7 +47,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function parseRadioPayload(value: unknown) {
   if (isRecord(value)) {
     return {
-      ...value,
       text: parseText(value.text, 2048)
     };
   }
