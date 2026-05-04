@@ -171,7 +171,7 @@ export const generateAbletonLiveMidiFile = (state: SequencerState): Blob => {
     buildTrackChunk(`PHANTOM ${track.name}`, collectTrackEvents(track, index, stepsPerBar))
   );
 
-  return new Blob([new Uint8Array([...header, ...tempoTrack, ...trackChunks])], { type: 'audio/midi' });
+  return new Blob([new Uint8Array([...header, ...tempoTrack, ...trackChunks.flat()])], { type: 'audio/midi' });
 };
 
 export const createAbletonLivePluginManifest = (state: SequencerState) => ({
