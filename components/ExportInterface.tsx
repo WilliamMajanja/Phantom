@@ -5,6 +5,7 @@ import { SequencerState } from '../types';
 import { shadowCore } from '../services/audio/ShadowCore';
 import { generateMidiFile } from '../services/midiWriter';
 import { createMpcProgram, createSampleManifestBlob, createSeratoSlabManifest } from '../services/sampleExport';
+import { createAbletonLiveManifestBlob, generateAbletonLiveMidiFile } from '../services/abletonLive';
 
 interface ExportInterfaceProps {
     isOpen: boolean;
@@ -24,6 +25,17 @@ const ExportInterface: React.FC<ExportInterfaceProps> = ({ isOpen, onClose, stat
         const midiBlob = generateMidiFile(state);
         const safeName = filename.replace(/[^a-z0-9-_]/gi, '_');
         downloadBlob(midiBlob, `${safeName}.mid`);
+    };
+
+    const handleAbletonMidiExport = () => {
+        const midiBlob = generateAbletonLiveMidiFile(state);
+        const safeName = filename.replace(/[^a-z0-9-_]/gi, '_');
+        downloadBlob(midiBlob, `${safeName}.ableton-live.mid`);
+    };
+
+    const handleAbletonManifestExport = () => {
+        const safeName = filename.replace(/[^a-z0-9-_]/gi, '_');
+        downloadBlob(createAbletonLiveManifestBlob(state), `${safeName}.ableton-live-plugin.json`);
     };
 
     // --- AUDIO EXPORT ---
@@ -133,6 +145,36 @@ const ExportInterface: React.FC<ExportInterfaceProps> = ({ isOpen, onClose, stat
                             <span className="text-2xl opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all">🎹</span>
                         </div>
                         <div className="absolute inset-0 bg-accent/10 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
+                    </button>
+
+                    <button 
+                        onClick={handleAbletonMidiExport}
+                        disabled={isRecording}
+                        className="w-full group relative overflow-hidden bg-gray-900 border border-gray-700 hover:border-purple-400 p-4 text-left transition-all disabled:opacity-50"
+                    >
+                        <div className="relative z-10 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-purple-300 font-bold text-sm tracking-wider group-hover:text-white">ABLETON LIVE CLIPS (.MID)</h3>
+                                <p className="text-[10px] text-gray-500 mt-1">SMF TYPE 1 / SESSION VIEW TRACK LANES</p>
+                            </div>
+                            <span className="text-2xl opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all">🟪</span>
+                        </div>
+                        <div className="absolute inset-0 bg-purple-500/10 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
+                    </button>
+
+                    <button 
+                        onClick={handleAbletonManifestExport}
+                        disabled={isRecording}
+                        className="w-full group relative overflow-hidden bg-gray-900 border border-gray-700 hover:border-purple-400 p-4 text-left transition-all disabled:opacity-50"
+                    >
+                        <div className="relative z-10 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-purple-300 font-bold text-sm tracking-wider group-hover:text-white">LIVE PLUGIN MANIFEST (.JSON)</h3>
+                                <p className="text-[10px] text-gray-500 mt-1">MAX FOR LIVE BRIDGE / MACROS / SCENES</p>
+                            </div>
+                            <span className="text-2xl opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all">🔌</span>
+                        </div>
+                        <div className="absolute inset-0 bg-purple-500/10 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
                     </button>
 
                     {/* OPTION 2: WEBM/OGG */}
