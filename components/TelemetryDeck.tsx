@@ -8,8 +8,9 @@ interface TelemetryDeckProps {
 
 const TelemetryDeck: React.FC<TelemetryDeckProps> = ({ data }) => {
 
-  const getStatusColor = (val: number, limit: number) => 
-    val > limit ? 'text-accent animate-pulse' : 'text-text';
+  const getStatusColor = (val: number | null, limit: number) => 
+    val !== null && val > limit ? 'text-accent animate-pulse' : 'text-text';
+  const formatMetric = (val: number | null, unit: string, precision = 1) => val === null ? 'UNAVAILABLE' : `${val.toFixed(precision)} ${unit}`;
 
   return (
     <div className="glass-panel p-5 flex flex-col gap-3 font-sans text-xs">
@@ -25,25 +26,25 @@ const TelemetryDeck: React.FC<TelemetryDeckProps> = ({ data }) => {
         <div>
           <span className="text-textLight block mb-1">CPU Temp</span>
           <span className={`text-lg font-bold font-mono ${getStatusColor(data.cpuTemp, 75)}`}>
-            {data.cpuTemp.toFixed(1)}°C
+            {formatMetric(data.cpuTemp, '°C')}
           </span>
         </div>
         <div>
           <span className="text-textLight block mb-1">NPU Load</span>
           <span className={`text-lg font-bold font-mono ${getStatusColor(data.npuLoad, 80)}`}>
-            {data.npuLoad.toFixed(1)}%
+            {formatMetric(data.npuLoad, '%', 0)}
           </span>
         </div>
         <div>
           <span className="text-textLight block mb-1">Bus Speed</span>
           <span className="text-md font-mono text-text">
-            {data.pcieLaneUsage.toFixed(1)} GB/s
+            {formatMetric(data.pcieLaneUsage, 'GB/s')}
           </span>
         </div>
         <div>
           <span className="text-textLight block mb-1">Mem</span>
           <span className="text-md font-mono text-text">
-            {data.memoryUsage.toFixed(1)}G
+            {formatMetric(data.memoryUsage, 'G')}
           </span>
         </div>
       </div>

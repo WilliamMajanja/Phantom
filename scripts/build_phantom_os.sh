@@ -150,7 +150,7 @@ Group=root
 Type=simple
 Environment=DISPLAY=:0
 Environment=WAYLAND_DISPLAY=wayland-0
-ExecStart=/opt/phantom/scripts/reflex-os.sh
+ExecStart=/opt/phantom/scripts/pinet-os.sh
 Restart=always
 
 [Install]

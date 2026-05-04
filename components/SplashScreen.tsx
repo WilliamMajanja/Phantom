@@ -15,7 +15,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
 
   // Boot Sequence Log
   const bootLog = [
-    "BIOS: REFLEX_UEFI v2.1.0",
+    "BIOS: PINET_OS_UEFI v2.1.0",
     "CPU: ARM CORTEX-A76 [4 CORES ACTIVE]",
     "MEM: LPDDR4X 4266MT/s CHECK...",
     "GPU: VIDEOCORE VII [OK]",
@@ -23,8 +23,8 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
     "MOUNT: /dev/nvme0n1 [READ_WRITE] -> /opt/phantom",
     "NET: HIVE_MESH LISTEN 915MHZ [SIGNAL: -85dB]",
     "AUDIO: PIPEWIRE SINK [48KHZ/32BIT/FLOAT]",
-    "GHOST_BRIDGE: GEMINI NODE LINKED",
-    "LEDGER: MINIMA PROVENANCE ACTIVE",
+    "GHOST_BRIDGE: LOCAL OLLAMA NODE LINKED",
+    "LEDGER: MINIMA RMPE-2 PROVENANCE ACTIVE",
     "SYSTEM INTEGRITY: 100%"
   ];
 

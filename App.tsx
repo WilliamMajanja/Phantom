@@ -20,7 +20,7 @@ import SplashScreen from './components/SplashScreen';
 import { INITIAL_STATE, INSTRUMENT_SETTINGS } from './constants';
 import { SequencerState, ProvenanceRecord, InstrumentType, Track, TelemetryData, Pattern } from './types';
 import { shadowCore } from './services/audio/ShadowCore';
-import { anchorSpirit, captureSpiritHash, mintAxiaToken } from './services/spiritLedger';
+import { anchorSpirit, captureSpiritHash, registerRmpe2Provenance } from './services/spiritLedger';
 import { phantomProtocol } from './services/phantomProtocol';
 import { clusterService } from './services/clusterService';
 import { radioService } from './services/radioService';
@@ -61,6 +61,7 @@ interface SystemStatus {
     sample_formats: string[];
     kernel: string;
     cpu_temp: number | null;
+    memoryUsedGB: number | null;
 }
 
 const App: React.FC = () => {
@@ -71,7 +72,7 @@ const App: React.FC = () => {
   const [provenance, setProvenance] = useState<ProvenanceRecord | null>(null);
   const [isAnchoring, setIsAnchoring] = useState(false);
   const [isMinting, setIsMinting] = useState(false);
-  const [axiaToken, setAxiaToken] = useState<any | null>(null);
+  const [rmpe2Token, setRmpe2Token] = useState<any | null>(null);
   const [focusMode, setFocusMode] = useState(false);
   const [selectedTrackIndex, setSelectedTrackIndex] = useState<number | null>(null);
   const [isAddTrackModalOpen, setIsAddTrackModalOpen] = useState(false);
@@ -90,7 +91,8 @@ const App: React.FC = () => {
       mixing_engine: 'Mixxx',
       sample_formats: ['AKAI_MPC_PROGRAM', 'SERATO_SLAB_MANIFEST'],
       kernel: 'OK',
-      cpu_temp: 45
+      cpu_temp: null,
+      memoryUsedGB: null
   });
   
   // Navigation State
@@ -102,7 +104,7 @@ const App: React.FC = () => {
 
   // Hardware State
   const [telemetry, setTelemetry] = useState<TelemetryData>({
-      cpuTemp: 45, npuLoad: 12, pcieLaneUsage: 20, memoryUsage: 3.2
+      cpuTemp: null, npuLoad: null, pcieLaneUsage: null, memoryUsage: null
   });
   const [tunerData, setTunerData] = useState({ rssi: 85, stems: { vox: 0.2, drum: 0.8, bass: 0.6, other: 0.4 } });
   const [isKillSwitchActive, setIsKillSwitchActive] = useState(false);
@@ -111,7 +113,7 @@ const App: React.FC = () => {
   const stateRef = useRef(state);
   useEffect(() => { stateRef.current = state; }, [state]);
 
-  // Simulation Loop & System Monitoring
+  // System Monitoring
   useEffect(() => {
     if (!bootComplete) return;
 
@@ -121,14 +123,6 @@ const App: React.FC = () => {
     const unsubscribeLogs = logService.subscribe(setSystemLogs);
 
     const interval = setInterval(async () => {
-        setTelemetry(prev => ({
-            // Safe Mode: Cap temp at 70 to prevent accidental Panic Trigger (80C)
-            cpuTemp: Math.min(70, Math.max(35, prev.cpuTemp + (Math.random() - 0.5) * 3)),
-            npuLoad: Math.min(100, Math.max(0, prev.npuLoad + (Math.random() - 0.5) * 10)),
-            pcieLaneUsage: Math.min(100, Math.max(10, prev.pcieLaneUsage + (Math.random() - 0.5) * 2)),
-            memoryUsage: prev.memoryUsage
-        }));
-
         setTunerData(prev => ({
             rssi: Math.min(100, Math.max(10, prev.rssi + (Math.random() * 10 - 5))),
             stems: {
@@ -149,9 +143,12 @@ const App: React.FC = () => {
                 const status = await res.json();
                 setSystemStatus(status);
                 setServerOnline(true);
-                if (status.cpu_temp) {
-                    setTelemetry(prev => ({ ...prev, cpuTemp: status.cpu_temp }));
-                }
+                setTelemetry(prev => ({
+                    ...prev,
+                    cpuTemp: status.cpu_temp,
+                    npuLoad: null,
+                    memoryUsage: status.memoryUsedGB
+                }));
             } else {
                 setServerOnline(false);
             }
@@ -410,27 +407,27 @@ const App: React.FC = () => {
       const { hash } = await captureSpiritHash(state);
       const record = await anchorSpirit(hash);
       setProvenance(record);
-      logService.addLog('SUCCESS', 'OMNIA', 'SPIRIT_ANCHORED');
+      logService.addLog('SUCCESS', 'RMPE2', 'SPIRIT_ANCHORED');
     } catch (e) {
       console.error("Spirit Anchor failed", e);
-      logService.addLog('ERROR', 'OMNIA', 'ANCHOR_FAILED');
+      logService.addLog('ERROR', 'RMPE2', 'ANCHOR_FAILED');
     } finally {
       setIsAnchoring(false);
     }
   };
 
-  const handleMintAxia = async () => {
+  const handleRegisterRmpe2 = async () => {
     if (isMinting || isKillSwitchActive) return;
     setIsMinting(true);
     try {
       const { hash } = await captureSpiritHash(state);
       const patternName = state.patterns[state.activePatternId]?.name || "UNNAMED";
-      const token = await mintAxiaToken(patternName, hash);
-      setAxiaToken(token);
-      logService.addLog('SUCCESS', 'AXIA', 'TOKEN_MINTED');
+      const token = await registerRmpe2Provenance(patternName, hash);
+      setRmpe2Token(token);
+      logService.addLog('SUCCESS', 'RMPE2', 'PROVENANCE_REGISTERED');
     } catch (e) {
-      console.error("Axia Mint failed", e);
-      logService.addLog('ERROR', 'AXIA', 'MINT_FAILED');
+      console.error("RMPE-2 registration failed", e);
+      logService.addLog('ERROR', 'RMPE2', 'REGISTRATION_FAILED');
     } finally {
       setIsMinting(false);
     }
@@ -594,21 +591,21 @@ const App: React.FC = () => {
                 h-7 sm:h-8 px-2 sm:px-4 font-bold text-[8px] sm:text-[10px] tracking-wide border transition-all flex items-center gap-1 sm:gap-2 rounded-sm
                 ${provenance ? 'border-accent text-accent bg-accent/10' : isAnchoring ? 'border-gray-700 text-gray-700' : 'bg-black border-gray-600 text-gray-300 hover:border-white'}
               `}
-              title="Anchor Session to Minima Omnia"
+              title="Anchor Session to Minima RMPE-2"
             >
-              {isAnchoring ? <span className="animate-spin text-[10px]">⟳</span> : provenance ? '⚓ OMNIA_OK' : 'OMNIA_ANCHOR'}
+              {isAnchoring ? <span className="animate-spin text-[10px]">⟳</span> : provenance ? '⚓ RMPE2_OK' : 'RMPE2_ANCHOR'}
             </button>
 
             <button 
-              onClick={handleMintAxia}
-              disabled={isMinting || !!axiaToken || isKillSwitchActive}
+              onClick={handleRegisterRmpe2}
+              disabled={isMinting || !!rmpe2Token || isKillSwitchActive}
               className={`
                 h-7 sm:h-8 px-2 sm:px-4 font-bold text-[8px] sm:text-[10px] tracking-wide border transition-all flex items-center gap-1 sm:gap-2 rounded-sm
-                ${axiaToken ? 'border-purple-500 text-purple-500 bg-purple-500/10' : isMinting ? 'border-gray-700 text-gray-700' : 'bg-black border-gray-600 text-gray-300 hover:border-white'}
+                ${rmpe2Token ? 'border-purple-500 text-purple-500 bg-purple-500/10' : isMinting ? 'border-gray-700 text-gray-700' : 'bg-black border-gray-600 text-gray-300 hover:border-white'}
               `}
-              title="Mint Provenance Token on Minima Axia"
+              title="Register Provenance Token on Minima RMPE-2"
             >
-              {isMinting ? <span className="animate-spin text-[10px]">⟳</span> : axiaToken ? '💎 AXIA_MINTED' : 'AXIA_MINT'}
+              {isMinting ? <span className="animate-spin text-[10px]">⟳</span> : rmpe2Token ? '💎 RMPE2_REGISTERED' : 'RMPE2_REGISTER'}
             </button>
             
             <button 
@@ -837,7 +834,7 @@ const App: React.FC = () => {
                 <div className="space-y-8">
                     <ClusterMonitor />
                     <TelemetryDeck data={telemetry} />
-                    <ProvenanceDeck record={provenance} token={axiaToken} />
+                    <ProvenanceDeck record={provenance} token={rmpe2Token} />
                 </div>
                 <div className="flex flex-col gap-8">
                     {/* SYSTEM AVAILABILITY */}
@@ -911,8 +908,8 @@ const App: React.FC = () => {
       <footer className="fixed bottom-0 w-full h-6 bg-black border-t border-gray-800 flex items-center justify-between px-4 text-[9px] text-gray-600 font-mono z-50">
           <div>INFINITY COLLABORATIONS SDH © 2024</div>
           <div className="flex gap-4">
-              <span>MEM: {Math.round(telemetry.memoryUsage)}%</span>
-              <span>CPU: {Math.round(telemetry.cpuTemp)}°C</span>
+              <span>MEM: {telemetry.memoryUsage === null ? 'UNAVAILABLE' : `${telemetry.memoryUsage.toFixed(1)}G`}</span>
+              <span>CPU: {telemetry.cpuTemp === null ? 'UNAVAILABLE' : `${Math.round(telemetry.cpuTemp)}°C`}</span>
               <span className={isClusterOnline ? "text-accent" : "text-red-900"}>MESH: {isClusterOnline ? "ONLINE" : "OFFLINE"}</span>
           </div>
       </footer>

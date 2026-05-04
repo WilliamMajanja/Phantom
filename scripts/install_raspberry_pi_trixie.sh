@@ -111,7 +111,6 @@ PHANTOM_URL=http://localhost:3000
 OLLAMA_BASE_URL=http://localhost:11434
 MINIMA_BASE_URL=http://localhost:9001
 OLLAMA_MODEL=llama3:8b-instruct-q4_K_M
-GEMINI_API_KEY=
 EOF
 fi
 chown root:"${APP_GROUP}" "${ENV_FILE}"
