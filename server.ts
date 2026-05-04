@@ -8,7 +8,8 @@ import createRateLimit from "express-rate-limit";
 import * as dotenv from "dotenv";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { access, readFile } from "fs/promises";
+import { loadRuntimeConfig } from "./services/runtimeConfig";
+import { hasLocalFmBinary, probeSystemStatus } from "./services/raspberryPi";
 
 // Initialize environment variables
 dotenv.config();
@@ -16,58 +17,50 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const execFileAsync = promisify(execFile);
-const PI_FM_RDS_PATH = path.join(__dirname, "pi_fm_rds");
+const runtimeConfig = loadRuntimeConfig();
 
-async function commandExists(command: string) {
-  try {
-    await execFileAsync(process.platform === "win32" ? "where" : "which", [command]);
-    return true;
-  } catch {
-    return false;
-  }
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown error";
 }
 
-async function hasLocalFmBinary() {
-  try {
-    await access(PI_FM_RDS_PATH);
-    return true;
-  } catch {
-    return commandExists("pi_fm_rds");
+function parseFrequency(value: unknown, fallback?: string): number | null {
+  for (const candidate of [value, fallback]) {
+    const frequency = Number(candidate);
+
+    if (Number.isFinite(frequency) && frequency >= 76 && frequency <= 108) {
+      return frequency;
+    }
   }
+
+  return null;
 }
 
-async function readPiCpuTemperature() {
-  try {
-    const raw = await readFile("/sys/class/thermal/thermal_zone0/temp", "utf8");
-    const temp = Number.parseInt(raw, 10) / 1000;
-    return Number.isFinite(temp) ? temp : null;
-  } catch {
-    return null;
-  }
+function parseText(value: unknown, maxLength: number) {
+  const text = String(value || "").trim();
+  return text.length > maxLength ? text.slice(0, maxLength) : text;
 }
 
-async function isHttpOk(url: string) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(1500) }).catch(() => null);
-  return !!response?.ok;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 const ghostSummonLimiter = createRateLimit({
   windowMs: 60_000,
-  limit: 10,
+  limit: runtimeConfig.rateLimits.ghostSummonPerMinute,
   standardHeaders: true,
   legacyHeaders: false
 });
 
 const systemStatusLimiter = createRateLimit({
   windowMs: 60_000,
-  limit: 30,
+  limit: runtimeConfig.rateLimits.systemStatusPerMinute,
   standardHeaders: true,
   legacyHeaders: false
 });
 
 const productionStaticLimiter = createRateLimit({
   windowMs: 60_000,
-  limit: 120,
+  limit: runtimeConfig.rateLimits.productionStaticPerMinute,
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -79,12 +72,9 @@ async function startServer() {
   // WebSocket Server attached to the same HTTP server
   const wss = new WebSocketServer({ server });
 
-  const PORT = Number.parseInt(process.env.PORT || "3000", 10);
-  const HOST = process.env.HOST || "0.0.0.0";
-
   // Middleware
   app.use(cors());
-  app.use(express.json());
+  app.use(express.json({ limit: runtimeConfig.jsonLimit }));
 
   // Request Logging
   app.use((req, res, next) => {
@@ -104,6 +94,7 @@ async function startServer() {
       status: "online", 
       version: "1.2.0-PHANTOM",
       uptime: process.uptime(),
+      appUrl: runtimeConfig.appUrl,
       timestamp: new Date().toISOString()
     });
   });
@@ -116,7 +107,7 @@ async function startServer() {
     try {
       // Call the local_ghost.py script
       // We use python3 to ensure we use the correct environment on Pi
-      const safePrompt = String(prompt || mood || 'dark techno').slice(0, 500);
+      const safePrompt = parseText(prompt || mood || "dark techno", 500);
       const safeBpm = Number.isFinite(Number(bpm)) ? String(Math.max(40, Math.min(240, Number(bpm)))) : "135";
       const { stdout, stderr } = await execFileAsync("python3", [path.join(__dirname, "scripts/local_ghost.py"), safePrompt, safeBpm]);
       
@@ -127,12 +118,13 @@ async function startServer() {
       
       const pattern = JSON.parse(stdout.trim());
       res.json({ success: true, pattern });
-    } catch (e: any) {
-      console.error("[GHOST] Error:", e.message);
+    } catch (e: unknown) {
+      const message = getErrorMessage(e);
+      console.error("[GHOST] Error:", message);
       res.status(500).json({ 
         success: false, 
         error: "GHOST_SUMMON_FAILED",
-        details: e.message 
+        details: message
       });
     }
   });
@@ -143,15 +135,15 @@ async function startServer() {
     console.log(`[RADIO] Updating RDS: "${text}" on ${freq}MHz`);
     
     try {
-      const rdsText = String(text || "").trim();
-      const frequency = Number(freq);
+      const rdsText = parseText(text, 64);
+      const frequency = parseFrequency(freq);
 
-      if (!rdsText || rdsText.length > 64 || !Number.isFinite(frequency) || frequency < 76 || frequency > 108) {
+      if (!rdsText || !frequency) {
         res.status(400).json({ success: false, error: "INVALID_RDS_REQUEST" });
         return;
       }
 
-      if (!(await hasLocalFmBinary())) {
+      if (!(await hasLocalFmBinary(__dirname))) {
         res.status(503).json({
           success: false,
           error: "FM_TRANSMITTER_UNAVAILABLE",
@@ -166,51 +158,22 @@ async function startServer() {
         frequency,
         timestamp: new Date().toISOString()
       });
-    } catch (e: any) {
-      res.status(500).json({ success: false, error: e.message });
+    } catch (e: unknown) {
+      res.status(500).json({ success: false, error: getErrorMessage(e) });
     }
   });
 
   // System Status (Component Availability)
   app.get("/api/system/status", systemStatusLimiter, async (req, res) => {
-    const status: any = {
-      ollama: false,
-      hailo: false,
-      minima: false,
-      radio: false,
-      lmms: false,
-      mixxx: false,
-      production_engine: "LMMS",
-      mixing_engine: "Mixxx",
-      sample_formats: ["AKAI_MPC_PROGRAM", "SERATO_SLAB_MANIFEST"],
-      kernel: "OK",
-      cpu_temp: null
-    };
-
     try {
-      // 1. Check Ollama (Local LLM)
-      status.ollama = await isHttpOk("http://localhost:11434/api/tags");
-
-      // 2. Check Minima (Blockchain Node)
-      status.minima = await isHttpOk("http://localhost:9001/status");
-
-      // 3. Check Hailo NPU (AI Accelerator)
-      try {
-        const { stdout } = await execFileAsync("hailortcli", ["scan"]);
-        status.hailo = stdout.includes("Device");
-      } catch(e) {
-        status.hailo = false;
-      }
-
-      // 4. Get CPU Temp (Pi Specific)
-      status.cpu_temp = await readPiCpuTemperature();
-      status.radio = await hasLocalFmBinary();
-      status.lmms = await commandExists("lmms");
-      status.mixxx = await commandExists("mixxx");
-
-      res.json(status);
+      res.json(await probeSystemStatus({
+        appRoot: __dirname,
+        ollamaTagsUrl: runtimeConfig.ollamaTagsUrl,
+        minimaStatusUrl: runtimeConfig.minimaStatusUrl
+      }));
     } catch (e) {
-      res.json(status);
+      console.error("[SYSTEM] Status probe failed:", getErrorMessage(e));
+      res.status(500).json({ error: "SYSTEM_STATUS_UNAVAILABLE" });
     }
   });
 
@@ -225,14 +188,33 @@ async function startServer() {
 
     ws.on("message", (data) => {
       try {
-        const message = JSON.parse(data.toString());
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(data.toString());
+        } catch {
+          ws.send(JSON.stringify({ type: "ERROR", error: "INVALID_JSON" }));
+          return;
+        }
+
+        if (!isRecord(parsed) || typeof parsed.type !== "string") {
+          ws.send(JSON.stringify({ type: "ERROR", error: "INVALID_MESSAGE" }));
+          return;
+        }
+
+        const message = parsed;
 
         if (message.type === "JOIN_FREQ") {
+          const nextFrequency = parseFrequency(message.frequency, currentFreq);
+          if (!nextFrequency) {
+            ws.send(JSON.stringify({ type: "ERROR", error: "INVALID_FREQUENCY" }));
+            return;
+          }
+
           if (frequencies.has(currentFreq)) {
             frequencies.get(currentFreq)?.delete(ws);
           }
           
-          currentFreq = message.frequency;
+          currentFreq = nextFrequency.toFixed(1);
           if (!frequencies.has(currentFreq)) {
             frequencies.set(currentFreq, new Set());
           }
@@ -247,8 +229,8 @@ async function startServer() {
           if (peers) {
             const payload = JSON.stringify({
               type: "RADIO_RECEPTION",
-              from: message.nodeId,
-              payload: message.payload,
+              from: parseText(message.nodeId, 64),
+              payload: parseText(message.payload, 2048),
               timestamp: Date.now()
             });
             
@@ -265,8 +247,8 @@ async function startServer() {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
               client.send(JSON.stringify({
                 type: "LORA_VOICE_RECEPTION",
-                payload: message.payload,
-                nodeId: message.nodeId
+                payload: parseText(message.payload, 4096),
+                nodeId: parseText(message.nodeId, 64)
               }));
             }
           });
@@ -309,7 +291,7 @@ async function startServer() {
     });
   }
 
-  server.listen(PORT, HOST, () => {
+  server.listen(runtimeConfig.port, runtimeConfig.host, () => {
     console.log(`
 ██████╗ ██╗  ██╗ █████╗ ███╗   ██╗████████╗ ██████╗ ███╗   ███╗
 ██╔══██╗██║  ██║██╔══██╗████╗  ██║╚══██╔══╝██╔═══██╗████╗ ████║
@@ -318,7 +300,7 @@ async function startServer() {
 ██║     ██║  ██║██║  ██║██║ ╚████║   ██║   ╚██████╔╝██║ ╚═╝ ██║
 ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚═╝     ╚═╝
                                                                
-PHANTOM CORE SERVER ACTIVE AT http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}
+PHANTOM CORE SERVER ACTIVE AT http://${runtimeConfig.host === "0.0.0.0" ? "localhost" : runtimeConfig.host}:${runtimeConfig.port}
 NODE_ENV: ${process.env.NODE_ENV || 'development'}
     `);
   });

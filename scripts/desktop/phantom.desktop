@@ -6,3 +6,4 @@ Exec=phantom-kiosk
 Icon=applications-multimedia
 Terminal=false
 Categories=Audio;AudioVideo;Music;
+StartupNotify=true

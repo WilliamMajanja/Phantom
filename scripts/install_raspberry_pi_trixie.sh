@@ -8,8 +8,31 @@ ENV_DIR="/etc/phantom"
 ENV_FILE="${ENV_DIR}/phantom.env"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+validate_system_name() {
+  local value="$1"
+  local label="$2"
+  if [[ ! "${value}" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+    echo "Invalid ${label}: ${value}" >&2
+    exit 1
+  fi
+}
+
 if [[ "${EUID}" -ne 0 ]]; then
   echo "Please run as root: sudo bash scripts/install_raspberry_pi_trixie.sh"
+  exit 1
+fi
+
+validate_system_name "${APP_USER}" "APP_USER"
+validate_system_name "${APP_GROUP}" "APP_GROUP"
+
+# Keep APP_DIR deliberately strict because it is embedded into a generated systemd unit.
+if [[ ! "${APP_DIR}" =~ ^/[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)*$ ]]; then
+  echo "APP_DIR must be an absolute path without consecutive or trailing slashes." >&2
+  exit 1
+fi
+
+if [[ "${APP_DIR}" == *"/../"* || "${APP_DIR}" == */.. ]]; then
+  echo "APP_DIR must not contain parent-directory traversal segments." >&2
   exit 1
 fi
 
@@ -27,6 +50,7 @@ echo "Installing PHANTOM for Raspberry Pi OS Trixie..."
 apt-get update
 apt-get install -y \
   alsa-utils \
+  ca-certificates \
   curl \
   libgpiod-dev \
   nodejs \
@@ -74,6 +98,8 @@ chown -R "${APP_USER}:${APP_GROUP}" "${APP_DIR}"
 cd "${APP_DIR}"
 runuser -u "${APP_USER}" -- npm ci
 runuser -u "${APP_USER}" -- npm run build
+# Build requires dev dependencies; prune them before running the long-lived appliance service.
+runuser -u "${APP_USER}" -- npm prune --omit=dev
 
 if [[ ! -f "${ENV_FILE}" ]]; then
   cat > "${ENV_FILE}" <<EOF
@@ -81,13 +107,45 @@ NODE_ENV=production
 HOST=0.0.0.0
 PORT=3000
 APP_URL=http://localhost:3000
+PHANTOM_URL=http://localhost:3000
+OLLAMA_BASE_URL=http://localhost:11434
+MINIMA_BASE_URL=http://localhost:9001
+OLLAMA_MODEL=llama3:8b-instruct-q4_K_M
 GEMINI_API_KEY=
 EOF
 fi
 chown root:"${APP_GROUP}" "${ENV_FILE}"
 chmod 0640 "${ENV_FILE}"
 
-install -m 0644 "${APP_DIR}/scripts/systemd/phantom.service" /etc/systemd/system/phantom.service
+cat > /etc/systemd/system/phantom.service <<EOF
+[Unit]
+Description=PHANTOM Raspberry Pi OS Application
+Documentation=https://github.com/WilliamMajanja/Phantom
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=${APP_USER}
+Group=${APP_GROUP}
+WorkingDirectory=${APP_DIR}
+EnvironmentFile=-${ENV_FILE}
+Environment=NODE_ENV=production
+Environment=HOST=0.0.0.0
+Environment=PORT=3000
+ExecStart=/usr/bin/npm run start
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=${APP_DIR}
+ReadWritePaths=${ENV_DIR}
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 install -m 0755 "${APP_DIR}/scripts/phantom-kiosk.sh" /usr/local/bin/phantom-kiosk
 install -m 0644 "${APP_DIR}/scripts/desktop/phantom.desktop" /usr/share/applications/phantom.desktop
 

@@ -54,8 +54,11 @@ Create a `.env` file in the root directory (see `.env.example`):
 ```env
 GEMINI_API_KEY=your_api_key_here
 OLLAMA_URL=http://localhost:11434/api/generate
+OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3:8b-instruct-q4_K_M
+MINIMA_BASE_URL=http://localhost:9001
 APP_URL=http://localhost:3000
+PHANTOM_URL=http://localhost:3000
 ```
 
 ### ⚡ Launch
@@ -82,7 +85,7 @@ PHANTOM can be installed as a production Raspberry Pi OS Trixie application with
 npm run raspi:install
 ```
 
-The installer copies the app to `/opt/phantom`, builds the production frontend, writes `/etc/systemd/system/phantom.service`, and installs a desktop launcher. Configure runtime values in `/etc/phantom/phantom.env`, then manage the app with:
+The installer copies the app to `/opt/phantom`, builds the production frontend, writes `/etc/systemd/system/phantom.service`, and installs a desktop launcher. Configure runtime values in `/etc/phantom/phantom.env`, including local Ollama/Minima endpoints and kiosk URL overrides, then manage the app with:
 
 ```bash
 sudo systemctl status phantom.service
