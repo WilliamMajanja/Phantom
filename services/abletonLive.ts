@@ -5,9 +5,9 @@ const MAX_MIDI_CHANNEL = 15;
 const MAX_MIDI_VELOCITY = 127;
 const DEFAULT_STEP_VELOCITY = 0.8;
 const DEFAULT_TRACK_VOLUME = 0.8;
-const SYNTH_CHANNEL_COUNT = 8;
 const MIN_GATE_TICKS = 12;
 const MAX_MIDI_TEXT_LENGTH = 64;
+const SYNTH_MIDI_CHANNELS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15];
 
 const ABLETON_NOTE_MAP: Record<InstrumentType, number> = {
   [InstrumentType.KICK]: 36,
@@ -113,8 +113,8 @@ const toVLQ = (value: number): number[] => {
 
 const toBytes = (value: number, bytes: number): number[] => {
   const result: number[] = [];
-  for (let index = bytes - 1; index >= 0; index--) {
-    result.push((value >> (8 * index)) & 0xff);
+  for (let byteIndex = bytes - 1; byteIndex >= 0; byteIndex--) {
+    result.push((value >> (8 * byteIndex)) & 0xff);
   }
   return result;
 };
@@ -148,7 +148,7 @@ const getTrackChannel = (track: Track, index: number) => {
     return 9;
   }
 
-  return Math.min(MAX_MIDI_CHANNEL, index % SYNTH_CHANNEL_COUNT);
+  return Math.min(MAX_MIDI_CHANNEL, SYNTH_MIDI_CHANNELS[index % SYNTH_MIDI_CHANNELS.length]);
 };
 
 const calculateMidiVelocity = (track: Track, stepVelocity?: number): number => {

@@ -113,7 +113,7 @@ PHANTOM now includes an Ableton-focused plugin bridge workflow for Live Suite us
 *   **Live MIDI export**: Use `DATA_EXFIL` → `ABLETON LIVE CLIPS (.MID)` to export SMF Type 1 clips with separate Live track lanes.
 *   **Plugin manifest export**: Use `DATA_EXFIL` → `LIVE PLUGIN MANIFEST (.JSON)` to export Max for Live bridge metadata, macro targets, scene names, and clip note maps.
 *   **Recommended Live setup**:
-    1. Create a virtual MIDI port named `PHANTOM Live Bridge` (IAC Driver on macOS, loopMIDI on Windows, or ALSA virmidi on Linux).
+    1. Create a virtual MIDI port named `PHANTOM Live Bridge` (IAC Driver on macOS, loopMIDI on Windows, or ALSA `snd-virmidi` on Linux).
     2. Enable the port for `Track` and `Remote` input in Ableton Live preferences.
     3. Import the `_ableton_live.mid` file into Session View.
     4. Mirror the manifest's eight macro targets in a Live rack or Max for Live companion device.

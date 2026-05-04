@@ -626,7 +626,7 @@ const App: React.FC = () => {
               <div className="flex-1 flex gap-0.5 sm:gap-1 px-1 sm:px-4 items-end overflow-x-auto no-scrollbar">
                    <TabButton label="SEQUENCER" tab={Tab.CORE} icon={Layers} />
                    <TabButton label="PERFORM" tab={Tab.PERFORM} icon={Zap} />
-                   <TabButton label="ABLETON" tab={Tab.ABLETON} icon={Activity} />
+                   <TabButton label="ABLETON LIVE" tab={Tab.ABLETON} icon={Activity} />
                    <TabButton label="RADIO" tab={Tab.RADIO} icon={Radio} />
                    <TabButton label="PATCHBAY" tab={Tab.PATCHBAY} icon={Settings2} />
                    <TabButton label="NETWORK" tab={Tab.NETWORK} icon={Network} />

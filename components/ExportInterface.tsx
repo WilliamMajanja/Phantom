@@ -155,7 +155,7 @@ const ExportInterface: React.FC<ExportInterfaceProps> = ({ isOpen, onClose, stat
                         <div className="relative z-10 flex justify-between items-center">
                             <div>
                                 <h3 className="text-purple-300 font-bold text-sm tracking-wider group-hover:text-white">ABLETON LIVE CLIPS (.MID)</h3>
-                                <p className="text-[10px] text-gray-500 mt-1">SMF TYPE 1 / SESSION VIEW TRACK LANES</p>
+                                <p className="text-[10px] text-gray-500 mt-1">SMF TYPE 1 / LIVE SESSION LANES</p>
                             </div>
                             <span className="text-2xl opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all">🟪</span>
                         </div>

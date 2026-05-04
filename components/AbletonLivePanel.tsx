@@ -22,7 +22,7 @@ const AbletonLivePanel: React.FC<AbletonLivePanelProps> = ({ state, onOpenExport
             <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">PHANTOM Live Bridge</h2>
             <p className="text-xs sm:text-sm text-gray-400 max-w-2xl mt-3">
               A Max for Live companion workflow that turns PHANTOM scenes into Live Session clips, routes Web MIDI through a virtual
-              PHANTOM port, and exposes performance macros for racks, resampling, and Ghost Bridge clip generation.
+              PHANTOM port, and exposes performance macros for racks, resampling, and Ghost Bridge AI clip generation.
             </p>
           </div>
 
