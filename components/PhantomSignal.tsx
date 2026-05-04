@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { phantomProtocol } from '../services/phantomProtocol';
-import { radioService } from '../services/radioService';
+import { radioService, RadioMessage } from '../services/radioService';
 import { shadowCore } from '../services/audio/ShadowCore';
 import Knob from './Knob';
 
@@ -19,7 +19,7 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle, onAirCha
   const [killSwitch, setKillSwitch] = useState(false);
   const [isArmed, setIsArmed] = useState(false); // Safety Hatch State
   const [frequency, setFrequency] = useState(101.1);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<RadioMessage[]>([]);
   const [inputMsg, setInputMsg] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'CONNECTING' | 'CONNECTED' | 'DISCONNECTED'>('DISCONNECTED');
@@ -115,7 +115,7 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle, onAirCha
       e.preventDefault();
       if (!inputMsg.trim()) return;
       radioService.transmit({ text: inputMsg });
-      setMessages(prev => [...prev.slice(-8), { from: 'YOU', payload: { text: inputMsg } }]);
+      setMessages(prev => [...prev.slice(-8), { type: 'RADIO_RECEPTION', from: 'YOU', payload: { text: inputMsg } }]);
       setInputMsg('');
   };
 
@@ -313,7 +313,7 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle, onAirCha
                            <span className="text-[6px] text-gray-700">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
                        </div>
                        <div className={`px-3 py-2 rounded-sm border ${m.from === 'YOU' ? 'bg-accent/5 border-accent/20 text-accent' : 'bg-blue-900/5 border-blue-500/20 text-blue-100'}`}>
-                           <span className="break-all leading-relaxed font-mono">{m.payload?.text || ''}</span>
+                            <span className="break-all leading-relaxed font-mono">{m.payload.text || ''}</span>
                        </div>
                    </div>
                ))}

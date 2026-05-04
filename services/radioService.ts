@@ -101,12 +101,11 @@ class RadioService {
     });
   }
 
-  public transmit(payload: string | RadioPayload) {
-    const radioPayload = typeof payload === 'string' ? { text: payload } : payload;
+  public transmit(payload: RadioPayload) {
     return this.send({
       type: "RADIO_TRANSMISSION",
       nodeId: this.nodeId,
-      payload: radioPayload
+      payload
     });
   }
 
