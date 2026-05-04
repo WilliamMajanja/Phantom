@@ -58,7 +58,7 @@ const ENGINE_DESCRIPTIONS = [
   {
     id: 'session-clip-launcher',
     name: 'Session Clip Launcher',
-    description: 'Maps PHANTOM sectors to Live Session View scenes with quantized launch metadata.',
+    description: 'Maps PHANTOM sectors to Ableton Live Session View scenes with quantized launch metadata.',
   },
   {
     id: 'macro-bridge',
@@ -151,6 +151,8 @@ const getTrackChannel = (track: Track, index: number) => {
   return Math.min(MAX_MIDI_CHANNEL, SYNTH_MIDI_CHANNELS[index % SYNTH_MIDI_CHANNELS.length]);
 };
 
+const getMidiChannelDisplay = (track: Track, index: number): number => getTrackChannel(track, index) + 1;
+
 const calculateMidiVelocity = (track: Track, stepVelocity?: number): number => {
   const velocity = stepVelocity ?? DEFAULT_STEP_VELOCITY;
   const volume = track.params.volume ?? DEFAULT_TRACK_VOLUME;
@@ -228,7 +230,7 @@ export const createAbletonLivePluginManifest = (state: SequencerState) => ({
       slot: trackIndex + 1,
       name: track.name,
       type: track.type,
-      channel: getTrackChannel(track, trackIndex) + 1,
+      channel: getMidiChannelDisplay(track, trackIndex),
       note: ABLETON_NOTE_MAP[track.type] ?? 60,
       pan: track.pan,
       volume: track.params.volume,
