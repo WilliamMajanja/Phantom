@@ -22,7 +22,7 @@ export interface RadioStatus {
 
 class RadioService {
   private socket: WebSocket | null = null;
-  private nodeId: string = `NODE_${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+  private nodeId: string = `NODE_${this.createNodeId()}`;
   private currentFrequency: string = "101.1";
   private reconnectTimer: number | null = null;
   private heartbeatTimer: number | null = null;
@@ -146,6 +146,14 @@ class RadioService {
   private updateStatus(update: Partial<RadioStatus>) {
     this.status = { ...this.status, ...update };
     this.onStatusCallbacks.forEach(cb => cb(this.status));
+  }
+
+  private createNodeId() {
+    if (globalThis.crypto?.randomUUID) {
+      return globalThis.crypto.randomUUID().slice(0, 8).toUpperCase();
+    }
+
+    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.toUpperCase();
   }
 
   public onMessage(cb: (msg: RadioMessage) => void) {
