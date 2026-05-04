@@ -17,7 +17,7 @@ export type SystemStatus = {
   sample_formats: string[];
   kernel: string;
   cpu_temp: number | null;
-  memory_used_gb: number | null;
+  memoryUsedGB: number | null;
 };
 
 export async function commandExists(command: string) {
@@ -56,7 +56,7 @@ export async function readKernelRelease() {
   }
 }
 
-export async function readMemoryUsageInGb() {
+export async function readMemoryUsageInGB() {
   try {
     const raw = await readFile("/proc/meminfo", "utf8");
     const values = new Map<string, number>();
@@ -97,7 +97,7 @@ export async function probeSystemStatus(config: {
     sample_formats: ["AKAI_MPC_PROGRAM", "SERATO_SLAB_MANIFEST"],
     kernel,
     cpu_temp: null,
-    memory_used_gb: null
+    memoryUsedGB: null
   };
 
   status.ollama = await isHttpOk(config.ollamaTagsUrl);
@@ -111,7 +111,7 @@ export async function probeSystemStatus(config: {
   }
 
   status.cpu_temp = await readPiCpuTemperature();
-  status.memory_used_gb = await readMemoryUsageInGb();
+  status.memoryUsedGB = await readMemoryUsageInGB();
   status.radio = await hasLocalFmBinary(config.appRoot);
   status.lmms = await commandExists("lmms");
   status.mixxx = await commandExists("mixxx");

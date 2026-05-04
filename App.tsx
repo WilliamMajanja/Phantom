@@ -61,7 +61,7 @@ interface SystemStatus {
     sample_formats: string[];
     kernel: string;
     cpu_temp: number | null;
-    memory_used_gb: number | null;
+    memoryUsedGB: number | null;
 }
 
 const App: React.FC = () => {
@@ -92,7 +92,7 @@ const App: React.FC = () => {
       sample_formats: ['AKAI_MPC_PROGRAM', 'SERATO_SLAB_MANIFEST'],
       kernel: 'OK',
       cpu_temp: null,
-      memory_used_gb: null
+      memoryUsedGB: null
   });
   
   // Navigation State
@@ -147,7 +147,7 @@ const App: React.FC = () => {
                     ...prev,
                     cpuTemp: status.cpu_temp,
                     npuLoad: null,
-                    memoryUsage: status.memory_used_gb
+                    memoryUsage: status.memoryUsedGB
                 }));
             } else {
                 setServerOnline(false);
