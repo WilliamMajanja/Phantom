@@ -43,8 +43,8 @@ const NeuralInterface: React.FC<NeuralInterfaceProps> = ({ onSubmit, isProcessin
       </form>
       
       <div className="mt-3 text-[10px] text-textLight font-mono flex justify-between">
-        <span>GEMINI-1.5-FLASH</span>
-        <span>FUNCTION CALLING: ACTIVE</span>
+        <span>LOCAL_OLLAMA</span>
+        <span>PINET NODE: ACTIVE</span>
       </div>
     </div>
   );

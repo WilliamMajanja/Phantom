@@ -72,10 +72,10 @@ export interface SequencerState {
 }
 
 export interface TelemetryData {
-  cpuTemp: number;
-  npuLoad: number;
-  pcieLaneUsage: number;
-  memoryUsage: number;
+  cpuTemp: number | null;
+  npuLoad: number | null;
+  pcieLaneUsage: number | null;
+  memoryUsage: number | null;
 }
 
 export interface ProvenanceRecord {

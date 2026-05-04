@@ -33,13 +33,6 @@ VALID_TYPES = {
     "bass_sub_808",
     "fx_glitch",
 }
-FALLBACK_PARAMS = {
-    "kick": {"volume": 0.9, "decay": 0.5, "pitch": 50, "tone": 0.25, "filterCutoff": 1000},
-    "snare": {"volume": 0.82, "decay": 0.22, "pitch": 210, "tone": 0.55, "filterCutoff": 3200},
-    "hihat_closed": {"volume": 0.62, "decay": 0.06, "pitch": 1000, "tone": 0.85, "filterCutoff": 9000},
-    "bass_fm": {"volume": 0.76, "decay": 0.45, "pitch": 55, "tone": 0.65, "filterCutoff": 850},
-}
-
 
 def log(message: str) -> None:
     print(message, file=sys.stderr)
@@ -65,44 +58,9 @@ def normalize_steps(raw_steps: Any) -> list[int]:
     return normalized
 
 
-def fallback_pattern(mood: str, bpm: int) -> dict[str, Any]:
-    prompt = mood.lower()
-    if "dnb" in prompt or "jungle" in prompt:
-        bpm = 174
-        kick = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-        snare = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
-    elif "hip hop" in prompt or "trap" in prompt:
-        bpm = 140
-        kick = [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0]
-        snare = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
-    else:
-        if "house" in prompt:
-            bpm = 124
-        elif "slow" in prompt or "downtempo" in prompt:
-            bpm = 90
-        kick = [1, 0, 0, 0] * 4
-        snare = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
-
-    def hat_step(step_index: int) -> int:
-        return 1 if step_index % 2 == 0 or "driving" in prompt else 0
-
-    hats = [hat_step(i) for i in range(16)]
-    bass = [1 if i in {0, 3, 6, 10, 13} else 0 for i in range(16)]
-    return {
-        "bpm": bpm,
-        "swing": 0.08 if "swing" in prompt or "shuffle" in prompt else 0,
-        "tracks": [
-            {"name": "KICK_CORE", "type": "kick", "steps": kick, "params": FALLBACK_PARAMS["kick"]},
-            {"name": "SNARE_VOID", "type": "snare", "steps": snare, "params": FALLBACK_PARAMS["snare"]},
-            {"name": "HAT_CLOSED", "type": "hihat_closed", "steps": hats, "params": FALLBACK_PARAMS["hihat_closed"]},
-            {"name": "BASS_REESE", "type": "bass_fm", "steps": bass, "params": FALLBACK_PARAMS["bass_fm"]},
-        ],
-    }
-
-
 def sanitize_pattern(pattern: Any, mood: str, bpm: int) -> dict[str, Any]:
     if not isinstance(pattern, dict):
-        return fallback_pattern(mood, bpm)
+        raise ValueError("OLLAMA_PATTERN_NOT_OBJECT")
 
     safe_bpm = pattern.get("bpm", bpm)
     if not isinstance(safe_bpm, (int, float)) or safe_bpm < 40 or safe_bpm > 240:
@@ -133,7 +91,7 @@ def sanitize_pattern(pattern: Any, mood: str, bpm: int) -> dict[str, Any]:
         )
 
     if not tracks:
-        return fallback_pattern(mood, int(safe_bpm))
+        raise ValueError("OLLAMA_PATTERN_EMPTY")
     return {"bpm": int(safe_bpm), "swing": pattern.get("swing", 0), "tracks": tracks[:8]}
 
 
@@ -159,13 +117,11 @@ Use only these track types: {', '.join(sorted(VALID_TYPES))}.
         "format": "json",
         "options": {"temperature": 0.75, "num_ctx": 4096},
     }
-    try:
-        data = post_json(OLLAMA_URL, payload)
-        response_text = data.get("response")
-        return sanitize_pattern(json.loads(response_text), mood, bpm) if response_text else fallback_pattern(mood, bpm)
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
-        log(f"Ollama unavailable, using deterministic fallback: {exc}")
-        return fallback_pattern(mood, bpm)
+    data = post_json(OLLAMA_URL, payload)
+    response_text = data.get("response")
+    if not response_text:
+        raise ValueError("OLLAMA_EMPTY_RESPONSE")
+    return sanitize_pattern(json.loads(response_text), mood, bpm)
 
 
 if __name__ == "__main__":
@@ -174,4 +130,8 @@ if __name__ == "__main__":
         bpm_arg = int(float(sys.argv[2])) if len(sys.argv) > 2 else DEFAULT_BPM
     except ValueError:
         bpm_arg = DEFAULT_BPM
-    print(json.dumps(summon_pattern(mood_arg[:500], bpm_arg), separators=(",", ":")))
+    try:
+        print(json.dumps(summon_pattern(mood_arg[:500], bpm_arg), separators=(",", ":")))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError, ValueError) as exc:
+        log(f"Ollama pattern generation unavailable: {exc}")
+        raise SystemExit(1)

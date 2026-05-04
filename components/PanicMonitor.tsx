@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import './panic-mode.css';
 
 interface PanicMonitorProps {
-    cpuTemp: number;
+    cpuTemp: number | null;
     isDeadManSwitchActive: boolean;
 }
 
@@ -14,7 +14,7 @@ const PanicMonitor: React.FC<PanicMonitorProps> = ({ cpuTemp, isDeadManSwitchAct
     
     useEffect(() => {
         const body = document.body;
-        const shouldPanic = cpuTemp > CRITICAL_TEMP || isDeadManSwitchActive;
+        const shouldPanic = (cpuTemp !== null && cpuTemp > CRITICAL_TEMP) || isDeadManSwitchActive;
         
         if (shouldPanic) {
             // ENGAGE PANIC

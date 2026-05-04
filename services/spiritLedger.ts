@@ -2,7 +2,7 @@
 import { ProvenanceRecord, SequencerState } from '../types';
 
 // SPIRIT LEDGER
-// Hashes the soul of the machine (Session State) to the Minima Blockchain
+// Hashes the soul of the machine (Session State) to the Minima RMPE-2 ledger
 
 export async function captureSpiritHash(
   sequencerState: SequencerState
@@ -26,7 +26,7 @@ export async function captureSpiritHash(
 export function anchorSpirit(sessionHash: string): Promise<ProvenanceRecord> {
     return new Promise((resolve, reject) => {
         if (typeof window.MDS === 'undefined') {
-            reject(new Error("MINIMA_MDS_UNAVAILABLE: PHANTOM must run inside Minima MDS to anchor Omnia records."));
+            reject(new Error("MINIMA_MDS_UNAVAILABLE: PHANTOM must run inside Minima MDS to anchor RMPE-2 records."));
             return;
         }
 
@@ -35,12 +35,11 @@ export function anchorSpirit(sessionHash: string): Promise<ProvenanceRecord> {
             return;
         }
 
-        // OMNIA DATA ANCHORING
-        // We use state variables to anchor the hash to the chain
-        const command = `send amount:0 address:0xDEAD state:{"666":"${sessionHash}"}`;
+        // RMPE-2 DATA ANCHORING
+        const command = `send amount:0 address:0xDEAD state:{"2":"RMPE-2","200":"${sessionHash}"}`;
         window.MDS.cmd(command, (response: any) => {
             if (response.status) {
-                console.log("✅ Omnia Data Anchored.");
+                console.log("✅ RMPE-2 Data Anchored.");
                 resolve({
                     hash: sessionHash,
                     timestamp: Date.now(),
@@ -55,13 +54,13 @@ export function anchorSpirit(sessionHash: string): Promise<ProvenanceRecord> {
 }
 
 /**
- * AXIA TOKENIZATION
- * Mints a unique NFT-style token on the Minima blockchain representing the audio pattern.
+ * RMPE-2 PROVENANCE REGISTRATION
+ * Registers a unique RMPE-2 provenance token on the Minima blockchain.
  */
-export function mintAxiaToken(name: string, sessionHash: string): Promise<any> {
+export function registerRmpe2Provenance(name: string, sessionHash: string): Promise<any> {
     return new Promise((resolve, reject) => {
         if (typeof window.MDS === 'undefined') {
-            reject(new Error("MINIMA_MDS_UNAVAILABLE: PHANTOM must run inside Minima MDS to mint Axia tokens."));
+            reject(new Error("MINIMA_MDS_UNAVAILABLE: PHANTOM must run inside Minima MDS to register RMPE-2 provenance."));
             return;
         }
 
@@ -70,13 +69,12 @@ export function mintAxiaToken(name: string, sessionHash: string): Promise<any> {
             return;
         }
 
-        // AXIA TOKEN CREATE
-        // We create a token with the session hash in the description/state
+        // RMPE-2 TOKEN CREATE
         const safeName = name.replace(/[^a-z0-9_-]/gi, '_').slice(0, 48) || 'UNNAMED';
-        const command = `tokencreate name:"PHANTOM_${safeName}" amount:1 description:"Phantom Audio Provenance: ${sessionHash}"`;
+        const command = `tokencreate name:"RMPE2_${safeName}" amount:1 description:"RMPE-2 Phantom Provenance: ${sessionHash}"`;
         window.MDS.cmd(command, (response: any) => {
             if (response.status) {
-                console.log("💎 Axia Token Minted.");
+                console.log("💎 RMPE-2 Provenance Registered.");
                 resolve(response.response);
             } else {
                 reject(response.error);
