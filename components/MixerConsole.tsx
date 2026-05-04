@@ -17,6 +17,11 @@ interface MixerConsoleProps {
 }
 
 const MixerConsole: React.FC<MixerConsoleProps> = ({ tracks, onUpdateTrack, engineStatus, currentStep = 0, playing = false }) => {
+    const getStepMeterHeight = (track: Track) => {
+        const isActiveStep = playing && track.steps[currentStep % track.steps.length]?.active && !track.mute;
+        return isActiveStep ? (track.params.volume || 0) * 100 : 0;
+    };
+
     
     return (
         <div className="glass-panel p-3 sm:p-6 w-full flex flex-col gap-4 overflow-x-auto custom-scrollbar">
@@ -132,7 +137,7 @@ const MixerConsole: React.FC<MixerConsoleProps> = ({ tracks, onUpdateTrack, engi
                         <div className="absolute right-1 top-10 bottom-10 w-1 bg-gray-900 rounded overflow-hidden">
                               <div
                                 className="absolute bottom-0 left-0 w-full bg-green-500 opacity-50 transition-all duration-100"
-                                style={{ height: `${playing && track.steps[currentStep % track.steps.length]?.active && !track.mute ? (track.params.volume || 0) * 100 : 0}%` }}
+                                style={{ height: `${getStepMeterHeight(track)}%` }}
                               ></div>
                         </div>
 

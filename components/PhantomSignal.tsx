@@ -42,7 +42,7 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle, onAirCha
     });
     const cleanupStatus = radioService.onStatus((status) => {
       setConnectionStatus(status.connected ? 'CONNECTED' : 'DISCONNECTED');
-      if (status.connected && Number(status.frequency) === Number(frequencyRef.current.toFixed(1))) {
+      if (status.connected && status.frequency === frequencyRef.current.toFixed(1)) {
         setIsScanning(false);
       }
     });

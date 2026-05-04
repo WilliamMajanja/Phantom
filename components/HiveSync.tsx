@@ -4,6 +4,9 @@ import { shadowCore } from '../services/audio/ShadowCore';
 import { radioService } from '../services/radioService';
 
 const HiveSync: React.FC = () => {
+  const MAX_RSSI_DB = -30;
+  const MIN_RSSI_DB = -120;
+  const RSSI_LATENCY_FACTOR = 4;
   const [hive, setHive] = useState<HiveState>({
     active: false,
     role: 'SLAVE',
@@ -18,7 +21,9 @@ const HiveSync: React.FC = () => {
       setHive(prev => ({
         ...prev,
         active: status.connected,
-        rssi: status.connected ? Math.max(-120, Math.min(-30, -30 - ((status.latency || 0) / 4))) : -120,
+        rssi: status.connected
+          ? Math.max(MIN_RSSI_DB, Math.min(MAX_RSSI_DB, MAX_RSSI_DB - ((status.latency || 0) / RSSI_LATENCY_FACTOR)))
+          : MIN_RSSI_DB,
         peers: status.peers,
         latency: status.latency ? Math.round(status.latency) : 0
       }));

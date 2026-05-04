@@ -96,7 +96,7 @@ class RadioService {
     });
   }
 
-  public transmit(payload: { text: string } | string) {
+  public transmit(payload: string | { text?: string; [key: string]: unknown }) {
     const radioPayload = typeof payload === 'string' ? { text: payload } : payload;
     return this.send({
       type: "RADIO_TRANSMISSION",

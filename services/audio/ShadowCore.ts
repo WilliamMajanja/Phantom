@@ -285,7 +285,7 @@ export class ShadowCore {
 
 
   private readAnalyserBands(analyser: AnalyserNode | null, count: number) {
-      if (!analyser || count <= 0) return Array(Math.max(0, count)).fill(0);
+      if (!analyser || count <= 0) return [];
 
       const data = new Uint8Array(analyser.frequencyBinCount);
       analyser.getByteFrequencyData(data);
