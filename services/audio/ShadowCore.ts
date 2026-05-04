@@ -287,13 +287,14 @@ export class ShadowCore {
   private readAnalyserBands(analyser: AnalyserNode | null, count: number) {
       if (!analyser || count <= 0) return [];
 
+      const bandCount = Math.min(count, analyser.frequencyBinCount);
       const data = new Uint8Array(analyser.frequencyBinCount);
       analyser.getByteFrequencyData(data);
-      const bucketSize = Math.max(1, Math.floor(data.length / count));
+      const bucketSize = Math.max(1, Math.floor(data.length / bandCount));
 
-      return Array.from({ length: count }, (_, index) => {
+      return Array.from({ length: bandCount }, (_, index) => {
           const start = index * bucketSize;
-          const end = index === count - 1 ? data.length : Math.min(data.length, start + bucketSize);
+          const end = index === bandCount - 1 ? data.length : Math.min(data.length, start + bucketSize);
           let total = 0;
           for (let i = start; i < end; i++) total += data[i];
           return end > start ? total / (end - start) / 255 : 0;
@@ -310,9 +311,9 @@ export class ShadowCore {
 
       return {
           bass: avg(bands.slice(0, 2)),
-          drums: avg(bands.slice(1, 5)),
-          vocals: avg(bands.slice(2, 6)),
-          other: avg(bands.slice(5))
+          drums: avg(bands.slice(2, 4)),
+          vocals: avg(bands.slice(4, 6)),
+          other: avg(bands.slice(6))
       };
   }
 

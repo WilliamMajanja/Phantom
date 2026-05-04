@@ -1,6 +1,11 @@
+export interface RadioPayload {
+  text?: string;
+  [key: string]: unknown;
+}
+
 export interface RadioMessage {
   type: string;
-  payload: { text?: string; [key: string]: unknown };
+  payload: RadioPayload;
   from?: string;
   frequency?: string;
   timestamp?: number;
@@ -96,7 +101,7 @@ class RadioService {
     });
   }
 
-  public transmit(payload: string | { text?: string; [key: string]: unknown }) {
+  public transmit(payload: string | RadioPayload) {
     const radioPayload = typeof payload === 'string' ? { text: payload } : payload;
     return this.send({
       type: "RADIO_TRANSMISSION",

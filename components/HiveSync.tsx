@@ -7,6 +7,9 @@ const HiveSync: React.FC = () => {
   const MAX_RSSI_DB = -30;
   const MIN_RSSI_DB = -120;
   const RSSI_LATENCY_FACTOR = 4;
+  const calculateRssiFromLatency = (latency: number | null) => (
+    Math.max(MIN_RSSI_DB, Math.min(MAX_RSSI_DB, MAX_RSSI_DB - ((latency || 0) / RSSI_LATENCY_FACTOR)))
+  );
   const [hive, setHive] = useState<HiveState>({
     active: false,
     role: 'SLAVE',
@@ -21,9 +24,7 @@ const HiveSync: React.FC = () => {
       setHive(prev => ({
         ...prev,
         active: status.connected,
-        rssi: status.connected
-          ? Math.max(MIN_RSSI_DB, Math.min(MAX_RSSI_DB, MAX_RSSI_DB - ((status.latency || 0) / RSSI_LATENCY_FACTOR)))
-          : MIN_RSSI_DB,
+        rssi: status.connected ? calculateRssiFromLatency(status.latency) : MIN_RSSI_DB,
         peers: status.peers,
         latency: status.latency ? Math.round(status.latency) : 0
       }));

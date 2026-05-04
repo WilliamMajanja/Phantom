@@ -192,6 +192,7 @@ async function startServer() {
   const frequencies = new Map<string, Set<WebSocket>>();
 
   const getPeerCount = (frequency: string) => frequencies.get(frequency)?.size ?? 0;
+  const getRemotePeerCount = (frequency: string) => Math.max(0, getPeerCount(frequency) - 1);
   const sendPeerStatus = (frequency: string) => {
     const peers = frequencies.get(frequency);
     if (!peers) return;
@@ -201,7 +202,7 @@ async function startServer() {
         peer.send(JSON.stringify({
           type: "PEER_STATUS",
           frequency,
-          peers: Math.max(0, getPeerCount(frequency) - 1),
+          peers: getRemotePeerCount(frequency),
           timestamp: Date.now()
         }));
       }
@@ -253,7 +254,7 @@ async function startServer() {
           ws.send(JSON.stringify({
             type: "FREQ_JOINED",
             frequency: currentFreq,
-            peers: Math.max(0, getPeerCount(currentFreq) - 1),
+            peers: getRemotePeerCount(currentFreq),
             timestamp: Date.now()
           }));
           sendPeerStatus(currentFreq);
@@ -284,7 +285,7 @@ async function startServer() {
             type: "PONG",
             sentAt: Number(message.sentAt) || Date.now(),
             frequency: currentFreq,
-            peers: Math.max(0, getPeerCount(currentFreq) - 1),
+            peers: getRemotePeerCount(currentFreq),
             timestamp: Date.now()
           }));
         }

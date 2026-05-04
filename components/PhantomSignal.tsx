@@ -12,6 +12,7 @@ interface PhantomSignalProps {
 }
 
 const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle, onAirChange, onFreqChange }) => {
+  const SCAN_TIMEOUT_MS = 1500;
   const [isOnAir, setIsOnAir] = useState(false);
   const [midiReady, setMidiReady] = useState(false);
   const [filterValue, setFilterValue] = useState(0);
@@ -103,7 +104,7 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle, onAirCha
       onFreqChange?.(val);
       setIsScanning(true);
       if (scanTimerRef.current) window.clearTimeout(scanTimerRef.current);
-      scanTimerRef.current = window.setTimeout(() => setIsScanning(false), 1500);
+      scanTimerRef.current = window.setTimeout(() => setIsScanning(false), SCAN_TIMEOUT_MS);
       radioService.joinFrequency(val.toFixed(1));
       if (midiReady) {
           phantomProtocol.setFrequency(val);
