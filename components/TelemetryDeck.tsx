@@ -10,7 +10,7 @@ const TelemetryDeck: React.FC<TelemetryDeckProps> = ({ data }) => {
 
   const getStatusColor = (val: number | null, limit: number) => 
     val !== null && val > limit ? 'text-accent animate-pulse' : 'text-text';
-  const formatMetric = (val: number | null, unit: string) => val === null ? 'UNAVAILABLE' : `${val.toFixed(1)} ${unit}`;
+  const formatMetric = (val: number | null, unit: string, precision = 1) => val === null ? 'UNAVAILABLE' : `${val.toFixed(precision)} ${unit}`;
 
   return (
     <div className="glass-panel p-5 flex flex-col gap-3 font-sans text-xs">
@@ -32,7 +32,7 @@ const TelemetryDeck: React.FC<TelemetryDeckProps> = ({ data }) => {
         <div>
           <span className="text-textLight block mb-1">NPU Load</span>
           <span className={`text-lg font-bold font-mono ${getStatusColor(data.npuLoad, 80)}`}>
-            {formatMetric(data.npuLoad, '%')}
+            {formatMetric(data.npuLoad, '%', 0)}
           </span>
         </div>
         <div>

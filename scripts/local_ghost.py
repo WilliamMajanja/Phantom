@@ -133,5 +133,5 @@ if __name__ == "__main__":
     try:
         print(json.dumps(summon_pattern(mood_arg[:500], bpm_arg), separators=(",", ":")))
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError, ValueError) as exc:
-        log(f"Ollama pattern generation unavailable: {exc}")
+        log(f"Ollama pattern generation unavailable: {exc}. Ensure Ollama is running and reachable at OLLAMA_URL={OLLAMA_URL}.")
         raise SystemExit(1)

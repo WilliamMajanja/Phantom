@@ -62,7 +62,8 @@ export async function readMemoryUsageGb() {
     const values = new Map<string, number>();
     for (const line of raw.split("\n")) {
       const [key, value = ""] = line.split(":");
-      if (key) values.set(key, Number.parseInt(value, 10));
+      const match = value.match(/\d+/);
+      if (key && match) values.set(key, Number.parseInt(match[0], 10));
     }
     const total = values.get("MemTotal");
     const available = values.get("MemAvailable");

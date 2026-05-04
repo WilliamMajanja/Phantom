@@ -146,7 +146,7 @@ const App: React.FC = () => {
                 setTelemetry(prev => ({
                     ...prev,
                     cpuTemp: status.cpu_temp,
-                    npuLoad: status.hailo ? prev.npuLoad : null,
+                    npuLoad: null,
                     memoryUsage: status.memory_used_gb
                 }));
             } else {
