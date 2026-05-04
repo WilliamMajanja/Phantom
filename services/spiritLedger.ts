@@ -48,6 +48,9 @@ async function buildMerkleLayer(nodes: string[]) {
 export async function createRecursiveMerkleProof(payload: unknown, stateHash: string): Promise<RecursiveMerkleProof> {
     const canonical = canonicalJson(payload);
     if (!canonical) throw new Error("RMP_EMPTY_PAYLOAD");
+    const computedStateHash = await sha256Hex(canonical);
+    if (computedStateHash !== stateHash) throw new Error("RMP_STATE_HASH_MISMATCH");
+
     const chunks = canonical.match(new RegExp(`.{1,${RMP_CHUNK_SIZE_CHARS}}`, 'gs')) || [];
     if (chunks.length === 0) throw new Error("RMP_EMPTY_PAYLOAD");
     let layer = await Promise.all(chunks.map((chunk, index) => sha256Hex(`RMP:LEAF:${index}:${chunk}`)));
