@@ -56,7 +56,7 @@ export async function readKernelRelease() {
   }
 }
 
-export async function readMemoryUsageGb() {
+export async function readMemoryUsageInGb() {
   try {
     const raw = await readFile("/proc/meminfo", "utf8");
     const values = new Map<string, number>();
@@ -111,7 +111,7 @@ export async function probeSystemStatus(config: {
   }
 
   status.cpu_temp = await readPiCpuTemperature();
-  status.memory_used_gb = await readMemoryUsageGb();
+  status.memory_used_gb = await readMemoryUsageInGb();
   status.radio = await hasLocalFmBinary(config.appRoot);
   status.lmms = await commandExists("lmms");
   status.mixxx = await commandExists("mixxx");
