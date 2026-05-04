@@ -10,7 +10,7 @@ const TelemetryDeck: React.FC<TelemetryDeckProps> = ({ data }) => {
 
   const getStatusColor = (val: number | null, limit: number) => 
     val !== null && val > limit ? 'text-accent animate-pulse' : 'text-text';
-  const formatMetric = (val: number | null, suffix: string) => val === null ? 'UNAVAILABLE' : `${val.toFixed(1)}${suffix}`;
+  const formatMetric = (val: number | null, unit: string) => val === null ? 'UNAVAILABLE' : `${val.toFixed(1)} ${unit}`;
 
   return (
     <div className="glass-panel p-5 flex flex-col gap-3 font-sans text-xs">
@@ -38,7 +38,7 @@ const TelemetryDeck: React.FC<TelemetryDeckProps> = ({ data }) => {
         <div>
           <span className="text-textLight block mb-1">Bus Speed</span>
           <span className="text-md font-mono text-text">
-            {formatMetric(data.pcieLaneUsage, ' GB/s')}
+            {formatMetric(data.pcieLaneUsage, 'GB/s')}
           </span>
         </div>
         <div>
