@@ -7,13 +7,26 @@ import { ProvenanceRecord, RecursiveMerkleProof, SequencerState } from '../types
 const RMP_CHUNK_SIZE = 1024;
 
 async function sha256Hex(value: string) {
-    const data = new TextEncoder().encode(value);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    if (!globalThis.crypto?.subtle) {
+        throw new Error("WEB_CRYPTO_UNAVAILABLE: RMP/RNPE-2 hashing requires a secure browser context.");
+    }
+
+    try {
+        const data = new TextEncoder().encode(value);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown digest failure";
+        throw new Error(`RMP_HASH_FAILED: ${message}`);
+    }
 }
 
 function canonicalJson(value: unknown): string {
-    if (value === null || typeof value !== 'object') return JSON.stringify(value);
+    if (value === null || typeof value !== 'object') {
+        const serialized = JSON.stringify(value);
+        if (typeof serialized !== 'string') throw new Error("RMP_EMPTY_PAYLOAD");
+        return serialized;
+    }
     if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
 
     return `{${Object.keys(value as Record<string, unknown>)
@@ -34,6 +47,7 @@ async function buildMerkleLayer(nodes: string[]) {
 
 export async function createRecursiveMerkleProof(payload: unknown, stateHash: string): Promise<RecursiveMerkleProof> {
     const canonical = canonicalJson(payload);
+    if (!canonical) throw new Error("RMP_EMPTY_PAYLOAD");
     const chunks = canonical.match(new RegExp(`.{1,${RMP_CHUNK_SIZE}}`, 'gs')) || [''];
     let layer = await Promise.all(chunks.map((chunk, index) => sha256Hex(`RMP:LEAF:${index}:${chunk}`)));
     const frontier = [layer[layer.length - 1]];

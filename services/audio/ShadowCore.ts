@@ -290,11 +290,10 @@ export class ShadowCore {
       const bandCount = Math.min(count, analyser.frequencyBinCount);
       const data = new Uint8Array(analyser.frequencyBinCount);
       analyser.getByteFrequencyData(data);
-      const bucketSize = Math.max(1, Math.floor(data.length / bandCount));
 
       return Array.from({ length: bandCount }, (_, index) => {
-          const start = index * bucketSize;
-          const end = index === bandCount - 1 ? data.length : Math.min(data.length, start + bucketSize);
+          const start = Math.floor((index * data.length) / bandCount);
+          const end = Math.floor(((index + 1) * data.length) / bandCount);
           let total = 0;
           for (let i = start; i < end; i++) total += data[i];
           return end > start ? total / (end - start) / 255 : 0;

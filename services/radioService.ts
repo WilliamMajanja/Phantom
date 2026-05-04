@@ -153,7 +153,13 @@ class RadioService {
       return globalThis.crypto.randomUUID().slice(0, 8).toUpperCase();
     }
 
-    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.toUpperCase();
+    if (globalThis.crypto?.getRandomValues) {
+      const values = new Uint32Array(1);
+      globalThis.crypto.getRandomValues(values);
+      return values[0].toString(16).padStart(8, "0").toUpperCase();
+    }
+
+    throw new Error("SECURE_RANDOM_UNAVAILABLE: Radio node identity requires browser crypto.");
   }
 
   public onMessage(cb: (msg: RadioMessage) => void) {
