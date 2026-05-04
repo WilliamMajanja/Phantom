@@ -285,7 +285,8 @@ export class ShadowCore {
 
 
   private readAnalyserBands(analyser: AnalyserNode | null, count: number) {
-      if (!analyser || count <= 0) return [];
+      if (count < 0) throw new Error('INVALID_ANALYSER_BAND_COUNT');
+      if (!analyser || count === 0) return [];
 
       const bandCount = Math.min(count, analyser.frequencyBinCount);
       const data = new Uint8Array(analyser.frequencyBinCount);

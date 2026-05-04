@@ -4,7 +4,7 @@ import { ProvenanceRecord, RecursiveMerkleProof, SequencerState } from '../types
 // SPIRIT LEDGER
 // Hashes the soul of the machine (Session State) to the Minima RNPE-2 ledger
 
-const RMP_CHUNK_SIZE = 1024;
+const RMP_CHUNK_SIZE_CHARS = 1024;
 
 async function sha256Hex(value: string) {
     if (!globalThis.crypto?.subtle) {
@@ -24,7 +24,7 @@ async function sha256Hex(value: string) {
 function canonicalJson(value: unknown): string {
     if (value === null || typeof value !== 'object') {
         const serialized = JSON.stringify(value);
-        if (typeof serialized !== 'string') throw new Error("RMP_EMPTY_PAYLOAD");
+        if (typeof serialized !== 'string') throw new Error("RMP_SERIALIZATION_FAILED");
         return serialized;
     }
     if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
@@ -48,7 +48,8 @@ async function buildMerkleLayer(nodes: string[]) {
 export async function createRecursiveMerkleProof(payload: unknown, stateHash: string): Promise<RecursiveMerkleProof> {
     const canonical = canonicalJson(payload);
     if (!canonical) throw new Error("RMP_EMPTY_PAYLOAD");
-    const chunks = canonical.match(new RegExp(`.{1,${RMP_CHUNK_SIZE}}`, 'gs')) || [''];
+    const chunks = canonical.match(new RegExp(`.{1,${RMP_CHUNK_SIZE_CHARS}}`, 'gs')) || [];
+    if (chunks.length === 0) throw new Error("RMP_EMPTY_PAYLOAD");
     let layer = await Promise.all(chunks.map((chunk, index) => sha256Hex(`RMP:LEAF:${index}:${chunk}`)));
     const frontier = [layer[layer.length - 1]];
     let depth = 0;

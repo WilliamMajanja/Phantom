@@ -22,7 +22,7 @@ export interface RadioStatus {
 
 class RadioService {
   private socket: WebSocket | null = null;
-  private nodeId: string = `NODE_${this.createNodeId()}`;
+  private nodeId: string = "";
   private currentFrequency: string = "101.1";
   private reconnectTimer: number | null = null;
   private heartbeatTimer: number | null = null;
@@ -33,9 +33,14 @@ class RadioService {
     frequency: this.currentFrequency,
     peers: 0,
     latency: null,
-    nodeId: this.nodeId,
+    nodeId: "",
     lastSeen: null
   };
+
+  constructor() {
+    this.nodeId = `NODE_${this.createNodeId()}`;
+    this.status.nodeId = this.nodeId;
+  }
 
   public connect() {
     if (this.socket?.readyState === WebSocket.OPEN || this.socket?.readyState === WebSocket.CONNECTING) return;
@@ -159,7 +164,7 @@ class RadioService {
       return values[0].toString(16).padStart(8, "0").toUpperCase();
     }
 
-    throw new Error("SECURE_RANDOM_UNAVAILABLE: Radio node identity requires browser crypto.");
+    throw new Error("SECURE_RANDOM_UNAVAILABLE: Radio node identity requires browser crypto. Serve PHANTOM over HTTPS or localhost.");
   }
 
   public onMessage(cb: (msg: RadioMessage) => void) {

@@ -18,9 +18,11 @@ interface MixerConsoleProps {
 
 const MixerConsole: React.FC<MixerConsoleProps> = ({ tracks, onUpdateTrack, engineStatus, currentStep = 0, playing = false }) => {
     const getStepMeterHeight = (track: Track) => {
-        if (track.steps.length === 0) return 0;
+        const stepCount = track.steps.length;
+        if (stepCount === 0) return 0;
 
-        const isActiveStep = playing && track.steps[currentStep % track.steps.length]?.active && !track.mute;
+        const stepIndex = currentStep % stepCount;
+        const isActiveStep = playing && track.steps[stepIndex]?.active && !track.mute;
         return isActiveStep ? (track.params.volume || 0) * 100 : 0;
     };
 
