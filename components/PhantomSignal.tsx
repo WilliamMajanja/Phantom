@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { phantomProtocol } from '../services/phantomProtocol';
 import { radioService } from '../services/radioService';
+import { shadowCore } from '../services/audio/ShadowCore';
 import Knob from './Knob';
 
 interface PhantomSignalProps {
@@ -21,27 +22,43 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle, onAirCha
   const [inputMsg, setInputMsg] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'CONNECTING' | 'CONNECTED' | 'DISCONNECTED'>('DISCONNECTED');
+  const [spectrumBands, setSpectrumBands] = useState<number[]>(Array(32).fill(0));
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const scanTimerRef = useRef<number | null>(null);
+  const frequencyRef = useRef(frequency);
 
   const presets = [88.1, 94.5, 101.1, 107.9];
+
+  useEffect(() => {
+    frequencyRef.current = frequency;
+  }, [frequency]);
 
   useEffect(() => {
     phantomProtocol.initialize().then(setMidiReady);
     
     setConnectionStatus('CONNECTING');
-    const cleanup = radioService.onMessage((msg) => {
-      setConnectionStatus('CONNECTED');
+    const cleanupMessages = radioService.onMessage((msg) => {
       setMessages(prev => [...prev.slice(-14), msg]); // Keep last 15
     });
-    
-    // Check connection periodically
-    const interval = setInterval(() => {
-        if (radioService.getNodeId()) setConnectionStatus('CONNECTED');
-    }, 5000);
+    const cleanupStatus = radioService.onStatus((status) => {
+      setConnectionStatus(status.connected ? 'CONNECTED' : 'DISCONNECTED');
+      if (status.connected && Number(status.frequency) === Number(frequencyRef.current.toFixed(1))) {
+        setIsScanning(false);
+      }
+    });
+
+    let frame = 0;
+    const updateSpectrum = () => {
+        setSpectrumBands(shadowCore.getSpectrumBands(32));
+        frame = requestAnimationFrame(updateSpectrum);
+    };
+    frame = requestAnimationFrame(updateSpectrum);
     
     return () => { 
-        cleanup(); 
-        clearInterval(interval);
+        cleanupMessages(); 
+        cleanupStatus();
+        cancelAnimationFrame(frame);
+        if (scanTimerRef.current) window.clearTimeout(scanTimerRef.current);
     };
   }, []);
 
@@ -85,7 +102,8 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle, onAirCha
       setFrequency(val);
       onFreqChange?.(val);
       setIsScanning(true);
-      setTimeout(() => setIsScanning(false), 500); // Simulate scanning delay
+      if (scanTimerRef.current) window.clearTimeout(scanTimerRef.current);
+      scanTimerRef.current = window.setTimeout(() => setIsScanning(false), 1500);
       radioService.joinFrequency(val.toFixed(1));
       if (midiReady) {
           phantomProtocol.setFrequency(val);
@@ -296,7 +314,7 @@ const PhantomSignal: React.FC<PhantomSignalProps> = ({ onDeadManToggle, onAirCha
                            <span className="text-[6px] text-gray-700">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
                        </div>
                        <div className={`px-3 py-2 rounded-sm border ${m.from === 'YOU' ? 'bg-accent/5 border-accent/20 text-accent' : 'bg-blue-900/5 border-blue-500/20 text-blue-100'}`}>
-                           <span className="break-all leading-relaxed font-mono">{m.payload.text}</span>
+                           <span className="break-all leading-relaxed font-mono">{m.payload?.text || ''}</span>
                        </div>
                    </div>
                ))}

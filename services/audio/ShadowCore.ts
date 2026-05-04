@@ -10,6 +10,7 @@ export class ShadowCore {
   // Signal Chain
   private masterGain: GainNode | null = null; 
   private masterLimiter: DynamicsCompressorNode | null = null;
+  private masterAnalyser: AnalyserNode | null = null;
   
   // FX Section
   private lowpassFilter: BiquadFilterNode | null = null;
@@ -104,6 +105,10 @@ export class ShadowCore {
     this.masterLimiter.ratio.value = 20;
     this.masterLimiter.attack.value = 0.001;
     this.masterLimiter.release.value = 0.1;
+
+    this.masterAnalyser = this.audioContext.createAnalyser();
+    this.masterAnalyser.fftSize = 1024;
+    this.masterAnalyser.smoothingTimeConstant = 0.75;
 
     // --- PRISM DJ DECK CHAIN ---
     this.prismGain = this.audioContext.createGain();
@@ -247,7 +252,8 @@ export class ShadowCore {
     this.reverbSendGain.connect(this.reverbNode);
     this.reverbNode.connect(this.masterLimiter);
 
-    this.masterLimiter.connect(this.audioContext.destination);
+    this.masterLimiter.connect(this.masterAnalyser);
+    this.masterAnalyser.connect(this.audioContext.destination);
 
     // Recording Setup
     this.mediaDest = this.audioContext.createMediaStreamDestination();
@@ -275,6 +281,39 @@ export class ShadowCore {
     } catch (e) {
       console.error("Failed to load Shadow Core Worklet", e);
     }
+  }
+
+
+  private readAnalyserBands(analyser: AnalyserNode | null, count: number) {
+      if (!analyser || count <= 0) return Array(Math.max(0, count)).fill(0);
+
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(data);
+      const bucketSize = Math.max(1, Math.floor(data.length / count));
+
+      return Array.from({ length: count }, (_, index) => {
+          const start = index * bucketSize;
+          const end = index === count - 1 ? data.length : Math.min(data.length, start + bucketSize);
+          let total = 0;
+          for (let i = start; i < end; i++) total += data[i];
+          return end > start ? total / (end - start) / 255 : 0;
+      });
+  }
+
+  public getSpectrumBands(count: number = 32) {
+      return this.readAnalyserBands(this.masterAnalyser, count);
+  }
+
+  public getPrismStemLevels() {
+      const bands = this.readAnalyserBands(this.prismAnalyser, 8);
+      const avg = (values: number[]) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+
+      return {
+          bass: avg(bands.slice(0, 2)),
+          drums: avg(bands.slice(1, 5)),
+          vocals: avg(bands.slice(2, 6)),
+          other: avg(bands.slice(5))
+      };
   }
 
   private createImpulseResponse(duration: number, decay: number): AudioBuffer {
@@ -677,9 +716,11 @@ export class ShadowCore {
   }
 
   public setDuckingAmount(val: number) {
-      // In a real implementation, we'd use the mic signal to duck the master music
-      // For now, we'll just store the value
-      console.log("[ShadowCore] Ducking set to:", val);
+      this.duckingAmount = Math.max(0, Math.min(1, val));
+      if (!this.micDuckingGain || !this.audioContext) return;
+
+      const duckedLevel = 1 - (this.duckingAmount * 0.6);
+      this.micDuckingGain.gain.setTargetAtTime(duckedLevel, this.audioContext.currentTime, 0.1);
   }
 
   public startLoRaBroadcast(onData: (base64: string) => void) {

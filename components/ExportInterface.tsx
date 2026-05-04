@@ -59,7 +59,7 @@ const ExportInterface: React.FC<ExportInterfaceProps> = ({ isOpen, onClose, stat
         shadowCore.play(); // Ensure playing
         shadowCore.startRecording(format);
 
-        // 3. Progress Bar Simulation
+        // 3. Recording progress
         const interval = 100;
         let elapsed = 0;
         const timer = setInterval(() => {
@@ -175,7 +175,7 @@ const ExportInterface: React.FC<ExportInterfaceProps> = ({ isOpen, onClose, stat
                          <div className="relative z-10 flex justify-between items-center">
                             <div>
                                 <h3 className="text-accent font-bold text-sm tracking-wider group-hover:text-white">AKAI MPC PROGRAM (.JSON)</h3>
-                                <p className="text-[10px] text-gray-500 mt-1">PAD MAP / NOTE MAP / SAMPLE PLACEHOLDERS</p>
+                                <p className="text-[10px] text-gray-500 mt-1">PAD MAP / NOTE MAP / SAMPLE REFERENCES</p>
                             </div>
                             <span className="text-2xl opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all">🥁</span>
                         </div>

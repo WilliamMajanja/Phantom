@@ -13,30 +13,31 @@ const HiveSync: React.FC = () => {
   });
   const [isBroadcastingVoice, setIsBroadcastingVoice] = useState(false);
 
-  // Simulation of LoRa activity
   useEffect(() => {
-    if (!hive.active) return;
-    const interval = setInterval(() => {
-        setHive(prev => ({
-            ...prev,
-            rssi: -90 + Math.random() * 20,
-            peers: prev.peers > 0 ? prev.peers : Math.floor(Math.random() * 3) + 1,
-            latency: Math.floor(Math.random() * 50) + 10
-        }));
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [hive.active]);
+    const cleanup = radioService.onStatus((status) => {
+      setHive(prev => ({
+        ...prev,
+        active: status.connected,
+        rssi: status.connected ? Math.max(-120, Math.min(-30, -30 - ((status.latency || 0) / 4))) : -120,
+        peers: status.peers,
+        latency: status.latency ? Math.round(status.latency) : 0
+      }));
+    });
+
+    return cleanup;
+  }, []);
 
   const toggleHive = () => {
-      setHive(prev => ({ ...prev, active: !prev.active, rssi: !prev.active ? -90 : -120 }));
+      if (!hive.active) radioService.connect();
   };
 
   const toggleRole = () => {
       setHive(prev => ({ ...prev, role: prev.role === 'MASTER' ? 'SLAVE' : 'MASTER' }));
   };
 
-  const toggleVoiceLoRa = () => {
+  const toggleVoiceLoRa = async () => {
       if (!isBroadcastingVoice) {
+          await shadowCore.initMic();
           shadowCore.startLoRaBroadcast((base64) => {
               radioService.transmitLoRaVoice(base64);
           });
@@ -58,7 +59,7 @@ const HiveSync: React.FC = () => {
             onClick={toggleHive}
             className={`px-2 py-1 text-[9px] font-bold rounded border ${hive.active ? 'border-accent text-accent animate-pulse' : 'border-textLight text-textLight'}`}
          >
-            {hive.active ? 'LINKED' : 'OFFLINE'}
+            {hive.active ? 'LINKED' : 'CONNECT'}
          </button>
       </div>
 

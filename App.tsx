@@ -84,7 +84,7 @@ const App: React.FC = () => {
       ollama: false,
       hailo: false,
       minima: false,
-      radio: true,
+      radio: false,
       lmms: false,
       mixxx: false,
       production_engine: 'LMMS',
@@ -106,7 +106,7 @@ const App: React.FC = () => {
   const [telemetry, setTelemetry] = useState<TelemetryData>({
       cpuTemp: null, npuLoad: null, pcieLaneUsage: null, memoryUsage: null
   });
-  const [tunerData, setTunerData] = useState({ rssi: 85, stems: { vox: 0.2, drum: 0.8, bass: 0.6, other: 0.4 } });
+  const [tunerData, setTunerData] = useState({ rssi: 0, stems: { vox: 0, drum: 0, bass: 0, other: 0 } });
   const [isKillSwitchActive, setIsKillSwitchActive] = useState(false);
 
   // Refs for audio sync
@@ -123,18 +123,20 @@ const App: React.FC = () => {
     const unsubscribeLogs = logService.subscribe(setSystemLogs);
 
     const interval = setInterval(async () => {
-        setTunerData(prev => ({
-            rssi: Math.min(100, Math.max(10, prev.rssi + (Math.random() * 10 - 5))),
+        const radioStatus = radioService.getStatus();
+        const prismLevels = shadowCore.getPrismStemLevels();
+        setTunerData({
+            rssi: radioStatus.connected ? Math.max(10, Math.min(100, 100 - ((radioStatus.latency || 0) / 5))) : 0,
             stems: {
-                vox: Math.max(0, Math.min(1, prev.stems.vox + (Math.random() - 0.5) * 0.2)),
-                drum: Math.max(0, Math.min(1, prev.stems.drum + (Math.random() - 0.5) * 0.2)),
-                bass: Math.max(0, Math.min(1, prev.stems.bass + (Math.random() - 0.5) * 0.2)),
-                other: Math.max(0, Math.min(1, prev.stems.other + (Math.random() - 0.5) * 0.2))
+                vox: prismLevels.vocals,
+                drum: prismLevels.drums,
+                bass: prismLevels.bass,
+                other: prismLevels.other
             }
-        }));
+        });
 
         const nodes = clusterService.getStatus();
-        setIsClusterOnline(nodes.some(n => n.id !== 'NEXUS' && n.online));
+        setIsClusterOnline(nodes.some(n => n.id !== 'NEXUS' && n.online) || radioStatus.peers > 0);
 
         // Fetch System Status
         try {
@@ -811,7 +813,7 @@ const App: React.FC = () => {
             <div className="h-full max-w-7xl mx-auto p-4 md:p-8 flex flex-col gap-6 animate-fade-in overflow-y-auto custom-scrollbar">
                 {/* MIXER CONSOLE - TOP */}
                 <div className="w-full flex-shrink-0">
-                    <MixerConsole tracks={state.tracks} onUpdateTrack={handleUpdateTrack} engineStatus={systemStatus} />
+                    <MixerConsole tracks={state.tracks} onUpdateTrack={handleUpdateTrack} engineStatus={systemStatus} currentStep={currentStep} playing={state.playing} />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 flex-grow min-h-0 pb-8">

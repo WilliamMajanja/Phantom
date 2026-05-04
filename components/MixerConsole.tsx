@@ -12,9 +12,11 @@ interface MixerConsoleProps {
         production_engine?: string;
         mixing_engine?: string;
     };
+    currentStep?: number;
+    playing?: boolean;
 }
 
-const MixerConsole: React.FC<MixerConsoleProps> = ({ tracks, onUpdateTrack, engineStatus }) => {
+const MixerConsole: React.FC<MixerConsoleProps> = ({ tracks, onUpdateTrack, engineStatus, currentStep = 0, playing = false }) => {
     
     return (
         <div className="glass-panel p-3 sm:p-6 w-full flex flex-col gap-4 overflow-x-auto custom-scrollbar">
