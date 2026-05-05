@@ -17,6 +17,7 @@ import ExportInterface from './components/ExportInterface';
 import PerformancePad from './components/PerformancePad';
 import MixerConsole from './components/MixerConsole';
 import SplashScreen from './components/SplashScreen';
+import AbletonLivePanel from './components/AbletonLivePanel';
 import { INITIAL_STATE, INSTRUMENT_SETTINGS } from './constants';
 import { SequencerState, ProvenanceRecord, InstrumentType, Track, TelemetryData, Pattern } from './types';
 import { shadowCore } from './services/audio/ShadowCore';
@@ -35,7 +36,8 @@ import {
   ShieldAlert, 
   Database,
   LayoutGrid,
-  Settings2
+  Settings2,
+  Cable
 } from 'lucide-react';
 
 import { logService, LogEntry } from './services/logService';
@@ -44,6 +46,7 @@ import { logService, LogEntry } from './services/logService';
 enum Tab {
   CORE = 'SEQUENCER',
   PERFORM = 'PERFORMANCE',
+  ABLETON = 'ABLETON LIVE',
   RADIO = 'PIRATE RADIO',
   PATCHBAY = 'PATCHBAY',
   NETWORK = 'NETWORK'
@@ -624,11 +627,12 @@ const App: React.FC = () => {
       {!focusMode && (
           <nav className="h-10 w-full flex border-b border-gray-800 bg-black shrink-0 relative z-40 shadow-neo">
               <div className="flex-1 flex gap-0.5 sm:gap-1 px-1 sm:px-4 items-end overflow-x-auto no-scrollbar">
-                  <TabButton label="SEQUENCER" tab={Tab.CORE} icon={Layers} />
-                  <TabButton label="PERFORM" tab={Tab.PERFORM} icon={Zap} />
-                  <TabButton label="RADIO" tab={Tab.RADIO} icon={Radio} />
-                  <TabButton label="PATCHBAY" tab={Tab.PATCHBAY} icon={Settings2} />
-                  <TabButton label="NETWORK" tab={Tab.NETWORK} icon={Network} />
+                   <TabButton label="SEQUENCER" tab={Tab.CORE} icon={Layers} />
+                   <TabButton label="PERFORM" tab={Tab.PERFORM} icon={Zap} />
+                   <TabButton label="ABLETON LIVE" tab={Tab.ABLETON} icon={Cable} />
+                   <TabButton label="RADIO" tab={Tab.RADIO} icon={Radio} />
+                   <TabButton label="PATCHBAY" tab={Tab.PATCHBAY} icon={Settings2} />
+                   <TabButton label="NETWORK" tab={Tab.NETWORK} icon={Network} />
               </div>
               <div className="px-4 flex items-center">
                    {isKillSwitchActive && (
@@ -788,6 +792,11 @@ const App: React.FC = () => {
                     <PerformancePad />
                 </div>
             </div>
+        )}
+
+        {/* --- TAB: ABLETON LIVE --- */}
+        {activeTab === Tab.ABLETON && (
+            <AbletonLivePanel state={state} onOpenExport={() => setIsExportOpen(true)} />
         )}
 
         {/* --- TAB: PIRATE RADIO --- */}
