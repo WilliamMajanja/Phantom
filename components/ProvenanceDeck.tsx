@@ -12,15 +12,15 @@ const ProvenanceDeck: React.FC<ProvenanceDeckProps> = ({ record, token }) => {
         <div className="glass-panel p-6 bg-black border border-gray-800 font-mono">
             <div className="flex justify-between border-b border-gray-800 pb-2 mb-4">
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">BLOCKCHAIN_PROVENANCE</h3>
-                <span className="text-[9px] text-accent">MINIMA_RMPE-2</span>
+                <span className="text-[9px] text-accent">MINIMA_RNPE-2</span>
             </div>
 
             <div className="space-y-6">
-                {/* RMPE-2 ANCHOR SECTION */}
+                {/* RNPE-2 ANCHOR SECTION */}
                 <div>
                     <div className="flex items-center gap-2 mb-2">
                         <div className={`w-1.5 h-1.5 rounded-full ${record ? 'bg-accent' : 'bg-gray-800'}`}></div>
-                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">RMPE2_ANCHOR</span>
+                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">RNPE2_ANCHOR</span>
                     </div>
                     {record ? (
                         <div className="bg-gray-900/50 p-3 border border-gray-800 space-y-2">
@@ -36,17 +36,29 @@ const ProvenanceDeck: React.FC<ProvenanceDeckProps> = ({ record, token }) => {
                                 <span className="text-[8px] text-gray-600 uppercase">TX_ID</span>
                                 <span className="text-[9px] text-gray-400 truncate max-w-[150px]">{record.signature}</span>
                             </div>
+                            {record.rmpProof && (
+                                <>
+                                    <div className="flex justify-between">
+                                        <span className="text-[8px] text-gray-600 uppercase">RMP_Root</span>
+                                        <span className="text-[9px] text-accent truncate max-w-[150px]">{record.rmpProof.root}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-[8px] text-gray-600 uppercase">RMP_Depth</span>
+                                        <span className="text-[9px] text-gray-300">{record.rmpProof.depth} / {record.rmpProof.leafCount} leaves</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ) : (
                         <div className="text-[9px] text-gray-600 italic">NO_DATA_ANCHORED</div>
                     )}
                 </div>
 
-                {/* RMPE-2 REGISTRY SECTION */}
+                {/* RNPE-2 REGISTRY SECTION */}
                 <div>
                     <div className="flex items-center gap-2 mb-2">
                         <div className={`w-1.5 h-1.5 rounded-full ${token ? 'bg-purple-500' : 'bg-gray-800'}`}></div>
-                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">RMPE2_TOKEN</span>
+                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">RNPE2_TOKEN</span>
                     </div>
                     {token ? (
                         <div className="bg-purple-900/5 p-3 border border-purple-900/20 space-y-2">
@@ -71,8 +83,8 @@ const ProvenanceDeck: React.FC<ProvenanceDeckProps> = ({ record, token }) => {
 
             <div className="mt-6 pt-4 border-t border-gray-800">
                 <p className="text-[8px] text-gray-600 leading-relaxed">
-                    PHANTOM uses the RMPE-2 provenance profile on Minima for immutable state anchoring and unique asset registration.
-                    Every pattern generated is cryptographically linked to your node's identity.
+                    PHANTOM uses RNPE-2 peer verification and RMP roots on Minima for immutable state anchoring and compact network-state validation.
+                    Every pattern generated is cryptographically linked to your node's current consensus view.
                 </p>
             </div>
         </div>

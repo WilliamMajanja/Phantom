@@ -44,6 +44,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+function parseRadioPayload(value: unknown) {
+  if (isRecord(value)) {
+    return {
+      text: parseText(value.text, 2048)
+    };
+  }
+
+  return { text: parseText(value, 2048) };
+}
+
 const ghostSummonLimiter = createRateLimit({
   windowMs: 60_000,
   limit: runtimeConfig.rateLimits.ghostSummonPerMinute,
@@ -180,6 +190,24 @@ async function startServer() {
   // Radio Relay Logic
   const frequencies = new Map<string, Set<WebSocket>>();
 
+  const getPeerCount = (frequency: string) => frequencies.get(frequency)?.size ?? 0;
+  const getRemotePeerCount = (frequency: string) => Math.max(0, getPeerCount(frequency) - 1);
+  const sendPeerStatus = (frequency: string) => {
+    const peers = frequencies.get(frequency);
+    if (!peers) return;
+
+    peers.forEach((peer) => {
+      if (peer.readyState === WebSocket.OPEN) {
+        peer.send(JSON.stringify({
+          type: "PEER_STATUS",
+          frequency,
+          peers: getRemotePeerCount(frequency),
+          timestamp: Date.now()
+        }));
+      }
+    });
+  };
+
   wss.on("connection", (ws, req) => {
     const ip = req.socket.remoteAddress;
     console.log(`[WS] New connection from ${ip}`);
@@ -210,8 +238,10 @@ async function startServer() {
             return;
           }
 
-          if (frequencies.has(currentFreq)) {
-            frequencies.get(currentFreq)?.delete(ws);
+          const previousFreq = currentFreq;
+          if (frequencies.has(previousFreq)) {
+            frequencies.get(previousFreq)?.delete(ws);
+            sendPeerStatus(previousFreq);
           }
           
           currentFreq = nextFrequency.toFixed(1);
@@ -220,7 +250,13 @@ async function startServer() {
           }
           frequencies.get(currentFreq)?.add(ws);
           
-          ws.send(JSON.stringify({ type: "FREQ_JOINED", frequency: currentFreq }));
+          ws.send(JSON.stringify({
+            type: "FREQ_JOINED",
+            frequency: currentFreq,
+            peers: getRemotePeerCount(currentFreq),
+            timestamp: Date.now()
+          }));
+          sendPeerStatus(currentFreq);
           console.log(`[WS] Node joined frequency: ${currentFreq}`);
         }
 
@@ -230,7 +266,8 @@ async function startServer() {
             const payload = JSON.stringify({
               type: "RADIO_RECEPTION",
               from: parseText(message.nodeId, 64),
-              payload: parseText(message.payload, 2048),
+              payload: parseRadioPayload(message.payload),
+              frequency: currentFreq,
               timestamp: Date.now()
             });
             
@@ -240,6 +277,16 @@ async function startServer() {
               }
             });
           }
+        }
+
+        if (message.type === "PING") {
+          ws.send(JSON.stringify({
+            type: "PONG",
+            sentAt: Number(message.sentAt) || Date.now(),
+            frequency: currentFreq,
+            peers: getRemotePeerCount(currentFreq),
+            timestamp: Date.now()
+          }));
         }
 
         if (message.type === "LORA_VOICE") {
@@ -262,6 +309,7 @@ async function startServer() {
       console.log(`[WS] Connection closed from ${ip}`);
       if (frequencies.has(currentFreq)) {
         frequencies.get(currentFreq)?.delete(ws);
+        sendPeerStatus(currentFreq);
       }
     });
   });

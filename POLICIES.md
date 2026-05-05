@@ -2,7 +2,7 @@
 
 ## Runtime Policy
 
-PHANTOM is a Minima-PiNet-Os DApp. Production operation requires Raspberry Pi edge hardware, local Ollama, and Minima MDS/MiniHub for RMPE-2 provenance actions. Features that depend on unavailable local services must report the failure instead of simulating success.
+PHANTOM is a Minima-PiNet-Os DApp. Production operation requires Raspberry Pi edge hardware, local Ollama, and Minima MDS/MiniHub for RNPE-2 provenance actions. Features that depend on unavailable local services must report the failure instead of simulating success.
 
 ## AI Policy
 
@@ -10,7 +10,7 @@ Ghost Bridge uses the configured local Ollama endpoint for pattern generation. C
 
 ## Provenance Policy
 
-RMPE-2 is the supported provenance profile. Session anchoring and asset registration must include the cryptographic session hash, must run through Minima MDS, and must fail closed if the chain interface is unavailable.
+RNPE-2 is the supported provenance and peer-exchange profile. Session anchoring and asset registration must include the cryptographic session hash plus its RMP root, must run through Minima MDS, and must fail closed if the chain interface is unavailable.
 
 ## Data Handling Policy
 

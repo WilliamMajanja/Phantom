@@ -158,7 +158,7 @@ export class PhantomProtocol {
     }
     
     setFrequency(mhz: number) {
-        // Map 87.5-108.0 MHz to 0-127 MIDI CC for simulation/readout
+        // Map 87.5-108.0 MHz to 0-127 MIDI CC for hardware control/readout
         const min = 87.5;
         const max = 108.0;
         const normalized = (mhz - min) / (max - min);
